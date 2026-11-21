@@ -18,6 +18,18 @@ _HYPOTHETICAL = re.compile(r"\b(?:if|once|unless|should|will|would|might|in case
 _RULES = [
     (PaymentState.FAILED, [
         r"\b(?:fail(?:ed|s|ure)?|declined|rejected|unsuccessful|denied)\b",
+        # Negated transfer assertions must take precedence over 'was transferred'.
+        r"\bno\s+(?:new\s+)?(?:money|funds|payment)\s+"
+        r"(?:was|were|has been|had been)\s+(?:transferred|sent|made|processed)\b",
+        r"\b(?:no\s+new\s+(?:payment|transfer)\s+was\s+(?:made|processed)|"
+        r"nothing\s+was\s+(?:transferred|sent))\b",
+        r"\b(?:not\s+authori[sz]ed|unauthori[sz]ed|insufficient\s+(?:funds|balance))\b",
+        r"\b(?:account(?:\s+details)?|beneficiary(?:\s+account)?(?:\s+details)?|"
+        r"destination(?:\s+account)?)\s+(?:is|are|was|were)\s+invalid\b",
+        r"\b(?:duplicate\s+(?:transaction|payment)|"
+        r"transaction\s+(?:is|was|appears\s+to\s+be)\s+a\s+duplicate)\b",
+        r"\b(?:cannot|can(?:'|’)?t|could\s+not|couldn(?:'|’)?t)\s+"
+        r"(?:proceed|process|complete|send)\b",
         r"\b(?:unable|wasn(?:'|’)t able|was not able)\s+to\s+(?:complete|process|send)\b",
     ]),
     (PaymentState.PENDING, [

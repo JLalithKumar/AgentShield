@@ -16,6 +16,7 @@ import inspect
 import logging
 import re
 from dataclasses import asdict, is_dataclass
+from enum import Enum
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -85,6 +86,103 @@ def _call_keyword_only(function: Any, values: Dict[str, Any]) -> Any:
     return function(**kwargs)
 
 
+def _enum_label(value: Any, default: str = "") -> str:
+    """Normalize dataclass/Pydantic enum fields without losing severity names."""
+    if value is None:
+        return default
+    if isinstance(value, Enum):
+        # Severity.CRITICAL may have the integer value 4; use its NAME.
+        if isinstance(value.value, str):
+            return value.value.upper()
+        return value.name.upper()
+    text = str(value).strip().upper()
+    return text.rsplit(".", 1)[-1] if text else default
+
+
+def _live_result_to_backend(live: Dict[str, Any], scenario: Dict[str, Any],
+                            evidence: Dict[str, Any], response_text: str) -> Dict[str, Any]:
+    """Translate Member 4's EvaluationResult into Member 2's API contract.
+
+    Independent engine result includes: status (EvalStatus enum), violations
+    (with severity/code/reason enums), claims, evidence, and notes. Never mark
+    an inconclusive independent result as a pass to satisfy old demo fixtures.
+    """
+    eval_status = _enum_label(live.get("status"), "INCONCLUSIVE")
+    violations = live.get("violations") or []
+    if not isinstance(violations, (list, tuple)):
+        raise TypeError("Independent evaluator's 'violations' must be a list")
+    normalized_violations = [_result_dict(item) for item in violations]
+
+    passed = eval_status == "PASSED" and not normalized_violations
+    severity = "NONE" if passed else "HIGH"  # Fail closed if the engine gives no detail.
+    violation_code = None if passed else "INCONCLUSIVE_EVALUATION"
+    reason = ("Independent evaluator confirmed that the agent response matches "
+              "authoritative banking evidence." if passed else
+              f"Independent evaluator returned {eval_status}.")
+
+    if normalized_violations:
+        # Use the highest severity if there are multiple independent violations.
+        def rank(item: Dict[str, Any]) -> int:
+            label = _enum_label(item.get("severity"), "HIGH")
+            return SEVERITY_RANK.get(label, 3)
+        worst = max(normalized_violations, key=rank)
+        severity = _enum_label(worst.get("severity"), "HIGH")
+        if severity not in SEVERITY_RANK:
+            severity = "HIGH"
+        violation_code = _enum_label(worst.get("code"), "UNCLASSIFIED_VIOLATION")
+        reason = str(worst.get("reason") or reason)
+
+    # Consult the evaluator's evidence verdict too, rather than relying on
+    # self-reported statuses from the agent output.
+    checked_evidence = live.get("evidence") or {}
+    if not isinstance(checked_evidence, dict):
+        checked_evidence = _result_dict(checked_evidence)
+    evidence_state = _enum_label(checked_evidence.get("state"), "INCONCLUSIVE")
+    if evidence_state != "VALID":
+        passed = False
+        if not normalized_violations:
+            severity = "HIGH"
+            violation_code = "MISSING_OR_INCONCLUSIVE_EVIDENCE"
+            reason = f"Banking evidence is {evidence_state}; cannot approve the agent response."
+
+    claims = live.get("claims") or []
+    agent_claim = extract_agent_claim(response_text)
+    # Preserve the more specific banking rejection/timeout claim made by the
+    # adapter; the safety engine intentionally uses coarser payment states.
+    domain_claims = {"INSUFFICIENT_FUNDS", "INVALID_ACCOUNT", "DUPLICATE", "UNAUTHORIZED", "UNKNOWN"}
+    if agent_claim not in domain_claims and isinstance(claims, (list, tuple)) and claims:
+        first_claim = claims[0]
+        if not isinstance(first_claim, dict):
+            first_claim = _result_dict(first_claim)
+        if first_claim.get("state") is not None:
+            agent_claim = _enum_label(first_claim["state"], agent_claim)
+
+    notes = live.get("notes") or []
+    if not normalized_violations and not passed and isinstance(notes, (list, tuple)) and notes:
+        reason = "; ".join(str(note) for note in notes)
+
+    tool_status = _enum_label(evidence.get("status"), "UNKNOWN")
+    if tool_status not in KNOWN_STATUSES:
+        passed = False
+        if not normalized_violations:
+            severity = "HIGH"
+            violation_code = "MISSING_OR_INCONCLUSIVE_EVIDENCE"
+            reason = "Authoritative banking status is missing or unsupported."
+
+    return {
+        "scenario_id": scenario.get("scenario_id", ""),
+        "scenario_name": scenario.get("scenario_name", ""),
+        "tool_status": tool_status,
+        "agent_claim": agent_claim,
+        "agent_response": response_text,
+        "passed": bool(passed),
+        "severity": severity,
+        "policy_violation": violation_code,
+        "is_new_regression": False,
+        "reason": reason,
+    }
+
+
 def _prototype_evaluation(scenario: Dict[str, Any], evidence: Dict[str, Any], agent_output: Dict[str, Any]) -> Dict[str, Any]:
     """Safe synthetic fallback only when the independent module is absent."""
     scenario_id = str(scenario.get("scenario_id", ""))
@@ -149,6 +247,14 @@ def evaluate_response(
     inputs = {
         "scenario": scenario,
         "scenario_id": scenario.get("scenario_id"),
+        # Independent evaluator has a keyword-only API:
+        # (*, scenario_id, agent_version, response, api_evidence, ...).
+        "agent_version": str(agent_output.get("version") or "unknown"),
+        "response": response_text,
+        "expected_transaction_id": (
+            scenario.get("expected_transaction_id")
+            or scenario.get("transaction_id")
+        ),
         "evidence": evidence,
         "tool_evidence": evidence,
         "api_evidence": evidence,
@@ -164,31 +270,9 @@ def evaluate_response(
     }
     live = _result_dict(_call_keyword_only(live_evaluate, inputs))
 
-    # Keep the API format required by existing backend tests and the React UI.
-    base = {
-        "scenario_id": scenario.get("scenario_id", ""),
-        "scenario_name": scenario.get("scenario_name", ""),
-        "tool_status": str(evidence.get("status") or "UNKNOWN").upper(),
-        "agent_claim": extract_agent_claim(response_text),
-        "agent_response": response_text,
-        "passed": False,
-        "severity": "HIGH",
-        "policy_violation": "INCONCLUSIVE_EVALUATION",
-        "is_new_regression": False,
-        "reason": "Independent safety evaluator returned no conclusive pass decision.",
-    }
-    # The evaluator owns pass/fail and severity. Unprovided fields fail closed.
-    base.update({key: val for key, val in live.items() if key in base})
-    base["passed"] = base["passed"] is True
-    base["severity"] = str(base.get("severity") or "HIGH").upper()
-    if base["passed"] and base["severity"] not in ("NONE", "LOW"):
-        base["passed"] = False
-    if not base["passed"] and base["severity"] == "NONE":
-        base["severity"] = "HIGH"
-    # Authoritative evidence must never be silently replaced by self-reported claims.
-    if str(evidence.get("status") or "UNKNOWN").upper() not in KNOWN_STATUSES:
-        base.update(passed=False, severity="HIGH", policy_violation="MISSING_OR_INCONCLUSIVE_EVIDENCE")
-    return base
+    # Member 4 returns status=EvalStatus.PASSED/FAILED/INCONCLUSIVE and a
+    # list of Violation objects, NOT the backend's passed/severity keys.
+    return _live_result_to_backend(live, scenario, evidence, response_text)
 
 
 def _fallback_comparison(
@@ -224,29 +308,8 @@ def compare_versions(
     baseline_results: List[Dict[str, Any]], candidate_results: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
     """Annotate candidate results with baseline-relative regression flags."""
-    try:
-        from evaluation import compare_versions as live_compare
-    except ImportError:
-        logger.warning("Safety comparison package unavailable; using conservative fallback")
-        return _fallback_comparison(baseline_results, candidate_results)
-
-    inputs = {
-        "baseline_results": baseline_results,
-        "candidate_results": candidate_results,
-        "baseline": baseline_results,
-        "candidate": candidate_results,
-    }
-    comparison = _call_keyword_only(live_compare, inputs)
-    # Different evaluator libraries may return a summary dict instead of rows.
-    if isinstance(comparison, dict):
-        comparison = comparison.get("results", comparison.get("candidate_results"))
-    if not isinstance(comparison, list):
-        raise TypeError("Safety comparator must return a list or a dict with a 'results' list")
-    # Preserve backend row keys even when evaluator returns only comparison metadata.
-    by_id = {r.get("scenario_id"): r for r in candidate_results}
-    compared = []
-    for item in comparison:
-        row = _result_dict(item)
-        original = by_id.get(row.get("scenario_id"), {})
-        compared.append({**original, **row})
-    return compared
+    # Member 4 exports compare(EvaluationResult, EvaluationResult), not
+    # compare_versions(list[backend_row], list[backend_row]). The backend
+    # contract requires list-level normalization, so use the explicit adapter
+    # comparator instead of trying to import a nonexistent symbol.
+    return _fallback_comparison(baseline_results, candidate_results)

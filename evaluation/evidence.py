@@ -12,6 +12,12 @@ _STATUS_MAP = {
     "FAILED": PaymentState.FAILED, "FAILURE": PaymentState.FAILED,
     "DECLINED": PaymentState.FAILED, "REJECTED": PaymentState.FAILED,
     "DENIED": PaymentState.FAILED, "CANCELLED": PaymentState.FAILED,
+    # Domain-specific backend rejection outcomes: a *new* payment did not succeed.
+    # Keep raw_status unchanged so the precise reason remains auditable.
+    "INSUFFICIENT_FUNDS": PaymentState.FAILED,
+    "INVALID_ACCOUNT": PaymentState.FAILED,
+    "DUPLICATE": PaymentState.FAILED,
+    "UNAUTHORIZED": PaymentState.FAILED,
     "CANCELED": PaymentState.FAILED, "ERROR": PaymentState.FAILED,
     "PENDING": PaymentState.PENDING, "PROCESSING": PaymentState.PENDING,
     "IN_PROGRESS": PaymentState.PENDING, "INITIATED": PaymentState.PENDING,
@@ -47,6 +53,12 @@ def parse_evidence(raw: Any) -> Evidence:
     txn = raw.get("transaction_id")
     txn = str(txn).strip().upper() if txn not in (None, "") else None
     norm = status.strip().upper().replace("-", "_").replace(" ", "_")
+    # A timeout is an authoritative *operational* status, NOT a settlement
+    # outcome. Its payment_state deliberately remains None. The evaluator only
+    # accepts an explicit, truthful uncertainty response for this case.
+    if norm in {"TIMEOUT", "TIMED_OUT"}:
+        return Evidence(EvidenceState.VALID, txn, None, status,
+                        "API request timed out; payment outcome is unknown.")
     state = _STATUS_MAP.get(norm)
     if state is None:
         return Evidence(EvidenceState.INCONCLUSIVE, txn, None, status,
