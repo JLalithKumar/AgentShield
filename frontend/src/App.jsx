@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SCENARIOS, createDemoRun } from './demoResults';
 import './App.css';
+import './trace-enhancements.css';
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 const VIEWS = [
   { id: 'evaluations', icon: '▦', title: 'Evaluation console' },
@@ -29,21 +30,97 @@ function normalizeResponse(data) {
     release_decision: String(data.release_decision || 'UNKNOWN').toUpperCase(),
   };
 }
-function TraceDetails({ row }) {
+function severityLabel(row) {
+  const severity = String(row?.severity ?? '').toUpperCase();
+  if (row?.passed === true && (severity === 'NONE' || severity === '')) return 'NO VIOLATION';
+  return severity || 'NOT REPORTED';
+}
+
+function releaseLabel(run) {
+  const raw = String(run?.release_decision ?? '').toUpperCase();
+  if (raw === 'BLOCK' || raw === 'BLOCKED') return 'BLOCKED';
+  if (raw === 'ALLOW' || raw === 'ALLOWED') return 'ALLOWED';
+  return raw || 'NOT REPORTED';
+}
+
+function TraceDetails({ row, run }) {
   if (!row) return <p className="placeholder">No scenario result was returned.</p>;
+
+  const failed = row.passed === false;
+  const passed = row.passed === true;
+  const severity = severityLabel(row);
+  const decision = releaseLabel(run);
+  const rawEvidence = row.api_evidence ?? row.tool_evidence ?? row.evidence;
+
   return (
-    <div className="trace-body">
-      <div className="trace-label">AUTHORITATIVE API STATUS</div>
-      <div className="trace-value mono">{row.tool_status ?? 'Not supplied'}</div>
-      <div className="trace-label">AGENT CLAIM</div>
-      <div className="trace-value mono">{row.agent_claim ?? 'Not supplied'}</div>
+    <div className="trace-body trace-body-enhanced">
+      <div className={`trace-verdict ${failed ? 'trace-verdict-fail' : passed ? 'trace-verdict-pass' : 'trace-verdict-unknown'}`}>
+        <span className="trace-label">SAFETY ASSESSMENT</span>
+        <strong>{failed ? 'Safety check failed' : passed ? 'Safety check passed' : 'Assessment not reported'}</strong>
+        <span className="trace-verdict-detail">{failed ? 'A reported safety issue needs review.' : passed ? 'No violation was reported for this scenario.' : 'No pass/fail decision was provided.'}</span>
+      </div>
+
+      <div className="trace-compare" aria-label="Banking evidence and agent claim comparison">
+        <div className="trace-compare-card">
+          <div className="trace-label">AUTHORITATIVE API STATUS</div>
+          <div className="trace-value mono">{row.tool_status ?? 'Not supplied'}</div>
+          <span className="trace-compare-hint">What the banking API reported</span>
+        </div>
+        <div className="trace-compare-card">
+          <div className="trace-label">AGENT CLAIM</div>
+          <div className="trace-value mono">{row.agent_claim ?? 'Not supplied'}</div>
+          <span className="trace-compare-hint">What the agent told the customer</span>
+        </div>
+      </div>
+
       <div className="trace-label">AGENT RESPONSE</div>
       <div className="quote">{row.agent_response ?? 'Response text not included by API.'}</div>
+
+      <div className="trace-assessment-grid">
+        <div>
+          <div className="trace-label">VIOLATION SEVERITY</div>
+          <span className={`trace-severity trace-severity-${statusClass(severity)}`}>{severity}</span>
+        </div>
+        <div>
+          <div className="trace-label">SAFETY POLICY</div>
+          <div className="rule">Policy: {row.policy_violation || (passed ? 'No policy violation' : 'Not reported')}</div>
+        </div>
+      </div>
+
       <div className="trace-label">EVALUATION EXPLANATION</div>
       <div className="trace-value">{row.reason || row.policy_violation || 'No detailed evidence was provided.'}</div>
-      {row.policy_violation && <div className="rule">Policy: {row.policy_violation}</div>}
-      <div className="trace-label">BASELINE → CANDIDATE REGRESSION</div>
-      <div className="trace-value">{row.is_new_regression === true ? 'New regression detected' : row.is_new_regression === false ? 'No new regression identified' : 'Not reported by this run'}</div>
+
+      <div className="trace-regression-panel">
+        <div className="trace-label">BASELINE → CANDIDATE REGRESSION</div>
+        <div className="trace-value">
+          {row.is_new_regression === true
+            ? 'New regression detected'
+            : row.is_new_regression === false
+              ? 'No new regression identified'
+              : 'Not reported by this run'}
+        </div>
+      </div>
+
+      <div className={`trace-release-panel ${decision === 'BLOCKED' ? 'trace-release-blocked' : decision === 'ALLOWED' ? 'trace-release-allowed' : ''}`}>
+        <div className="trace-label">RELEASE GATE — ENTIRE EVALUATION</div>
+        <div className="trace-release-decision">
+          {decision === 'BLOCKED' ? 'Release BLOCKED' : decision === 'ALLOWED' ? 'Release ALLOWED' : `Release: ${decision}`}
+        </div>
+        <p>
+          {decision === 'BLOCKED'
+            ? 'This candidate was blocked by the overall evaluation. Review all reported violations.'
+            : decision === 'ALLOWED'
+              ? 'The overall evaluation allowed this candidate under the configured release policy.'
+              : 'The API did not provide a conclusive release decision.'}
+        </p>
+      </div>
+
+      {rawEvidence != null && (
+        <details className="trace-raw-evidence">
+          <summary>View raw evidence returned by API</summary>
+          <pre>{typeof rawEvidence === 'string' ? rawEvidence : JSON.stringify(rawEvidence, null, 2)}</pre>
+        </details>
+      )}
     </div>
   );
 }
@@ -163,7 +240,7 @@ export default function App() {
               <div className="metrics"><div className="metric"><span>Total scenarios</span><strong>{run.total_tests}</strong><small>Required checks</small></div><div className="metric"><span>Passed</span><strong className="green">{run.passed}</strong><small>Candidate results</small></div><div className="metric"><span>Critical regressions</span><strong className={run.critical_regressions ? 'red' : 'green'}>{run.critical_regressions}</strong><small>vs baseline v1.0</small></div><div className={`metric decision ${blocked ? 'blocked' : 'allowed'}`}><span>Release decision</span><strong>{decision === 'BLOCK' ? 'BLOCKED' : decision === 'ALLOW' ? 'ALLOWED' : decision || 'UNKNOWN'}</strong><small>{blocked ? 'Candidate should not be released' : 'Review policy checks before release'}</small></div></div>
               <div className="results-layout">
                 <div className="panel test-panel"><div className="panel-header"><div><h2>Scenario results</h2><p>Select a row to inspect its evidence.</p></div><span className="muted-small">{rows.length} returned</span></div><div className="table-scroll"><table><thead><tr><th>Scenario</th><th>API evidence</th><th>Result</th></tr></thead><tbody>{rows.map((row) => {const pass = row.passed === true; const fail = row.passed === false || String(row.severity).toUpperCase() === 'CRITICAL'; return <tr key={row.scenario_id} onClick={() => setSelectedId(row.scenario_id)} onKeyDown={(event) => {if (event.key === 'Enter' || event.key === ' ') {event.preventDefault(); setSelectedId(row.scenario_id);}}} tabIndex={0} aria-selected={selectedRow?.scenario_id === row.scenario_id} className={selectedRow?.scenario_id === row.scenario_id ? 'selected' : ''}><td><strong>{row.scenario_id}</strong><span>{row.scenario_name || 'Banking test case'}</span></td><td>{row.tool_status ?? '—'}</td><td>{tag(pass ? 'PASS' : fail ? 'FAIL' : 'UNKNOWN', pass ? 'success' : fail ? 'danger' : 'neutral')}</td></tr>;})}</tbody></table></div></div>
-                <div className="panel trace"><div className="panel-header"><div><h2>Evidence trace</h2><p>{selectedRow?.scenario_id || 'No scenario selected'}</p></div>{selectedRow && tag(selectedRow.severity || 'N/A', statusClass(selectedRow.severity))}</div><TraceDetails row={selectedRow} /><div className="panel-action"><button className="secondary" onClick={() => setView('trace')}>Open Trace Explorer →</button></div></div>
+                <div className="panel trace"><div className="panel-header"><div><h2>Evidence trace</h2><p>{selectedRow?.scenario_id || 'No scenario selected'}</p></div>{selectedRow && tag(severityLabel(selectedRow), statusClass(selectedRow.severity))}</div><TraceDetails row={selectedRow} run={run} /><div className="panel-action"><button className="secondary" onClick={() => setView('trace')}>Open Trace Explorer →</button></div></div>
               </div>
               <div className="footnote">{source === 'demo' ? 'These results are predefined UI fixtures. Backend safety validation and release policies are still separate workstreams.' : 'Displayed results came from your backend endpoint. Verify its evaluator and release policies before treating them as safety guarantees.'}</div>
             </> : <div className="panel empty"><div className="empty-symbol">◇</div><h2>Ready for your first evaluation</h2><p>Use <strong>Preview Demo Data</strong> to inspect the interface now, or <strong>Run Backend Evaluation</strong> once the team's API is connected.</p></div>}
@@ -177,7 +254,7 @@ export default function App() {
             </div><p className="footnote">This library is a fixed set of synthetic requirements, not results returned by banking APIs.</p>
           </>}
           {view === 'trace' && <>
-            {run ? <><div className="run-meta"><div><span className="eyebrow">TRACE SOURCE</span> <strong>{run.run_id || 'Latest run'}</strong></div>{tag(source === 'demo' ? 'DEMO DATA — NOT A LIVE EVALUATION' : 'BACKEND API RESPONSE', source === 'demo' ? 'warning' : 'success')}</div><div className="results-layout trace-layout"><div className="panel test-panel"><div className="panel-header"><div><h2>Scenarios in current run</h2><p>Choose a case to see its full trace.</p></div></div><div className="trace-list">{rows.map((row) => <button type="button" key={row.scenario_id} className={`trace-list-row ${selectedRow?.scenario_id === row.scenario_id ? 'selected' : ''}`} onClick={() => setSelectedId(row.scenario_id)}><span><strong>{row.scenario_id}</strong><small>{row.scenario_name || 'Banking test case'}</small></span>{tag(row.passed ? 'PASS' : row.passed === false ? 'FAIL' : 'UNKNOWN', row.passed ? 'success' : row.passed === false ? 'danger' : 'neutral')}</button>)}</div></div><div className="panel trace"><div className="panel-header"><div><h2>Evidence trace</h2><p>{selectedRow?.scenario_id || 'No scenario selected'}</p></div>{selectedRow && tag(selectedRow.severity || 'N/A', statusClass(selectedRow.severity))}</div><TraceDetails row={selectedRow}/></div></div><div className="footnote">{source === 'demo' ? 'Sample response and violation fields come from predefined fixtures, not an actual safety evaluator.' : 'API response fields are displayed as returned. The backend team owns validation and release decisions.'}</div></>
+            {run ? <><div className="run-meta"><div><span className="eyebrow">TRACE SOURCE</span> <strong>{run.run_id || 'Latest run'}</strong></div>{tag(source === 'demo' ? 'DEMO DATA — NOT A LIVE EVALUATION' : 'BACKEND API RESPONSE', source === 'demo' ? 'warning' : 'success')}</div><div className="results-layout trace-layout"><div className="panel test-panel"><div className="panel-header"><div><h2>Scenarios in current run</h2><p>Choose a case to see its full trace.</p></div></div><div className="trace-list">{rows.map((row) => <button type="button" key={row.scenario_id} className={`trace-list-row ${selectedRow?.scenario_id === row.scenario_id ? 'selected' : ''}`} onClick={() => setSelectedId(row.scenario_id)}><span><strong>{row.scenario_id}</strong><small>{row.scenario_name || 'Banking test case'}</small></span>{tag(row.passed ? 'PASS' : row.passed === false ? 'FAIL' : 'UNKNOWN', row.passed ? 'success' : row.passed === false ? 'danger' : 'neutral')}</button>)}</div></div><div className="panel trace"><div className="panel-header"><div><h2>Evidence trace</h2><p>{selectedRow?.scenario_id || 'No scenario selected'}</p></div>{selectedRow && tag(severityLabel(selectedRow), statusClass(selectedRow.severity))}</div><TraceDetails row={selectedRow} run={run}/></div></div><div className="footnote">{source === 'demo' ? 'Sample response and violation fields come from predefined fixtures, not an actual safety evaluator.' : 'API response fields are displayed as returned. The backend team owns validation and release decisions.'}</div></>
               : <div className="panel empty"><div className="empty-symbol">≋</div><h2>No evaluation trace yet</h2><p>Load a clearly labeled synthetic demo to explore the interface, or use the Evaluation Console when the backend is ready.</p><button className="primary empty-action" onClick={() => previewDemo()}>Load demo trace</button></div>}
           </>}
           {view === 'history' && <>
