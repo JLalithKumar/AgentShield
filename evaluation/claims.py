@@ -19,7 +19,7 @@ _RULES = [
     (PaymentState.FAILED, [
         r"\b(?:fail(?:ed|s|ure)?|declined|rejected|unsuccessful|denied)\b",
         # Negated transfer assertions must take precedence over 'was transferred'.
-        r"\bno\s+(?:new\s+)?(?:money|funds|payment)\s+"
+        r"\bno\s+(?:new\s+)?(?:money|funds|payment|amount)\s+"
         r"(?:was|were|has been|had been)\s+(?:transferred|sent|made|processed)\b",
         r"\b(?:no\s+new\s+(?:payment|transfer)\s+was\s+(?:made|processed)|"
         r"nothing\s+was\s+(?:transferred|sent))\b",
