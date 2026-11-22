@@ -37,7 +37,7 @@ function runFor(candidate = 'v1.1', options = {}) {
 async function loadRun(user, result) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => result }));
   render(<App />);
-  await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+  await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
   expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
 }
 

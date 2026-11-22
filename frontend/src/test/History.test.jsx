@@ -67,7 +67,7 @@ describe('AgentShield session-only evaluation history', () => {
     fetch.mockResolvedValue({ ok: true, status: 200, json: async () => makeApiRun('v1.1') });
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /evaluation history/i }));
@@ -90,11 +90,11 @@ describe('AgentShield session-only evaluation history', () => {
     });
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole('combobox', { name: /candidate agent/i }), 'v1.2');
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /evaluation history/i }));
