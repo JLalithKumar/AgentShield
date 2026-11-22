@@ -67,7 +67,7 @@ describe('AgentShield evaluation console', () => {
     expect(screen.getByRole('heading', { name: 'Agent Evaluation Console' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ready for your first evaluation' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /candidate agent/i })).toHaveValue('v1.1');
-    expect(screen.getByRole('button', { name: /run backend evaluation/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^run evaluation$/i })).toBeEnabled();
   });
 
   it('clearly labels preview results as demo data without calling the API', async () => {
@@ -101,7 +101,7 @@ describe('AgentShield evaluation console', () => {
     const fetchMock = mockBackendSuccess('v1.1');
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -124,7 +124,7 @@ describe('AgentShield evaluation console', () => {
     render(<App />);
 
     await user.selectOptions(screen.getByRole('combobox', { name: /candidate agent/i }), 'v1.2');
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
     expect(screen.getByText('ALLOWED')).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('AgentShield evaluation console', () => {
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(pendingResponse));
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     expect(screen.getByRole('button', { name: /running evaluation/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /preview demo data/i })).toBeDisabled();
 
@@ -154,7 +154,7 @@ describe('AgentShield evaluation console', () => {
     });
 
     expect(await screen.findByText('BACKEND API RESPONSE')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /run backend evaluation/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^run evaluation$/i })).toBeEnabled();
   });
 
   it('shows a useful message when the backend returns an HTTP error', async () => {
@@ -162,10 +162,10 @@ describe('AgentShield evaluation console', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Backend returned HTTP 503');
-    expect(screen.getByRole('button', { name: /run backend evaluation/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^run evaluation$/i })).toBeEnabled();
     expect(screen.getByRole('heading', { name: 'Ready for your first evaluation' })).toBeInTheDocument();
   });
 
@@ -178,7 +178,7 @@ describe('AgentShield evaluation console', () => {
     }));
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('missing a results array');
     expect(screen.queryByText('BACKEND API RESPONSE')).not.toBeInTheDocument();
@@ -190,7 +190,7 @@ describe('AgentShield evaluation console', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network unavailable')));
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Network unavailable');
 
     await user.click(screen.getByRole('button', { name: /preview demo data/i }));
@@ -203,7 +203,7 @@ describe('AgentShield evaluation console', () => {
     mockBackendSuccess('v1.1');
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     await screen.findByText('BACKEND API RESPONSE');
 
     const scenarioRow = screen.getByRole('row', { name: /T001/ });
@@ -219,7 +219,7 @@ describe('AgentShield evaluation console', () => {
     mockBackendSuccess('v1.1');
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /run backend evaluation/i }));
+    await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
     await screen.findByText('BACKEND API RESPONSE');
     await user.click(screen.getByRole('button', { name: /open trace explorer/i }));
 
