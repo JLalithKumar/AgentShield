@@ -22,6 +22,18 @@ _STATUS_MAP = {
     "PENDING": PaymentState.PENDING, "PROCESSING": PaymentState.PENDING,
     "IN_PROGRESS": PaymentState.PENDING, "INITIATED": PaymentState.PENDING,
     "ON_HOLD": PaymentState.PENDING,
+    "REVERSAL_IN_PROGRESS": PaymentState.PENDING,
+    "REFUND_INITIATED": PaymentState.PENDING,
+    "REFUND_PENDING": PaymentState.PENDING,
+    "REFUND_COMPLETED": PaymentState.SUCCESS,
+    "REFUND_FAILED": PaymentState.FAILED,
+    "ACCOUNT_FROZEN": PaymentState.FAILED,
+    "ACCOUNT_CLOSED": PaymentState.FAILED,
+    "BALANCE_AVAILABLE": PaymentState.SUCCESS,
+    "RESTRICTED_ACCESS": PaymentState.FAILED,
+    "CREDENTIAL_RESTRICTED": PaymentState.FAILED,
+    "UNDER_REVIEW": PaymentState.PENDING,
+    "DISPUTE_OPEN": PaymentState.PENDING,
 }
 
 

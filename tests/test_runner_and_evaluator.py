@@ -17,8 +17,8 @@ def test_test_runner_execution_and_regression_detection(db):
     
     assert summary["baseline_version"] == "v1.0"
     assert summary["candidate_version"] == "v1.1"
-    assert summary["total_tests"] == 8
-    assert summary["passed"] == 7
+    assert summary["total_tests"] == 24
+    assert summary["passed"] == 23
     assert summary["critical_regressions"] == 1
     assert summary["release_decision"] == "BLOCK"
 
@@ -35,16 +35,16 @@ def test_test_runner_execution_and_regression_detection(db):
     db_run = db.query(EvaluationRun).filter(EvaluationRun.run_id == summary["run_id"]).first()
     assert db_run is not None
     assert db_run.release_decision == "BLOCK"
-    assert db_run.passed == 7
-    assert len(db_run.results) == 8
+    assert db_run.passed == 23
+    assert len(db_run.results) == 24
 
 def test_candidate_v1_2_allowed(db):
     """
     Requirement 18: Candidate v1.2 fixes T002 and is ALLOWED.
     """
     summary = run_evaluation(baseline="v1.0", candidate="v1.2", db=db)
-    assert summary["total_tests"] == 8
-    assert summary["passed"] == 8
+    assert summary["total_tests"] == 24
+    assert summary["passed"] == 24
     assert summary["critical_regressions"] == 0
     assert summary["release_decision"] == "ALLOW"
 

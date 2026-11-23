@@ -6,14 +6,63 @@ import { SCENARIOS } from './demoResults';
 
 function Workflow({ onBrowse }) {
   return <aside className="workflow">
-    <h2>Validation workflow</h2>
+    <h2>Five-stage workflow</h2>
     <ol>
-      <li><span><Icon name="layers" /></span><div><strong>Run scenarios</strong><p>Test both versions on {SCENARIOS.length} banking cases.</p></div></li>
-      <li><span><Icon name="activity" /></span><div><strong>Verify evidence</strong><p>Compare agent claims with API results.</p></div></li>
-      <li><span><Icon name="shield" /></span><div><strong>Apply release gate</strong><p>Check for critical regressions.</p></div></li>
+      <li><span><Icon name="layers" /></span><div><strong>1. Test scenarios</strong><p>24 fixed banking benchmark cases across 12 categories.</p></div></li>
+      <li><span><Icon name="play" /></span><div><strong>2. Run agents</strong><p>Record observable execution steps for baseline & candidate.</p></div></li>
+      <li><span><Icon name="server" /></span><div><strong>3. Validate evidence</strong><p>Compare agent claims with authoritative API results.</p></div></li>
+      <li><span><Icon name="activity" /></span><div><strong>4. Compare versions</strong><p>Detect regressions and safety policy violations.</p></div></li>
+      <li><span><Icon name="shield" /></span><div><strong>5. Release Gate</strong><p>Independent gate decides ALLOW or BLOCK.</p></div></li>
     </ol>
-    <button className="text-button" onClick={onBrowse}>Browse scenarios <Icon name="arrow" size={15} /></button>
+    <button className="text-button" onClick={onBrowse}>Browse 24 scenarios <Icon name="arrow" size={15} /></button>
   </aside>;
+}
+
+function FiveStageStepper({ run, loading, candidate }) {
+  const isBlocked = run ? releaseLabel(run) === 'BLOCKED' : false;
+  const stages = [
+    { stage_id: 1, name: '1. Test Scenarios', description: `${SCENARIOS.length} fixed benchmark cases`, status: run ? 'COMPLETED' : 'READY' },
+    { stage_id: 2, name: '2. Run Agent', description: `Baseline v1.0 & Candidate ${candidate}`, status: run ? 'COMPLETED' : (loading ? 'RUNNING' : 'PENDING') },
+    { stage_id: 3, name: '3. Validate Evidence', description: 'Evaluate against banking API results', status: run ? 'COMPLETED' : (loading ? 'RUNNING' : 'PENDING') },
+    { stage_id: 4, name: '4. Compare Versions', description: run ? `${run.critical_regressions || 0} critical regressions` : 'Baseline vs Candidate', status: run ? (run.critical_regressions > 0 ? 'REGRESSION' : 'COMPLETED') : 'PENDING' },
+    { stage_id: 5, name: '5. Release Decision', description: run?.reason || 'Independent Release Gate', status: run ? (isBlocked ? 'GATE BLOCKED' : 'GATE ALLOWED') : 'PENDING' },
+  ];
+
+  return <section className="panel stage-stepper-panel" aria-label="Five-stage evaluation workflow status">
+    <header className="panel-heading">
+      <div>
+        <h2>Five-stage workflow execution</h2>
+        <p>End-to-end change control verification pipeline from fixed scenarios to Release Gate decision.</p>
+      </div>
+      <Badge tone={run ? (isBlocked ? 'danger' : 'success') : (loading ? 'blue' : 'neutral')}>
+        {run ? (isBlocked ? 'GATE: BLOCKED' : 'GATE: ALLOWED') : (loading ? 'PIPELINE RUNNING' : 'AWAITING RUN')}
+      </Badge>
+    </header>
+    <div className="stepper-grid">
+      {stages.map((st, idx) => {
+        let badgeTone = 'neutral';
+        if (st.status === 'COMPLETED' || st.status === 'GATE ALLOWED') badgeTone = 'success';
+        else if (st.status === 'GATE BLOCKED' || st.status === 'REGRESSION') badgeTone = 'danger';
+        else if (st.status === 'RUNNING' || st.status === 'READY') badgeTone = 'blue';
+
+        return <div key={st.stage_id || idx} className={`stepper-step stepper-${st.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+          <div className="stepper-step-header">
+            <span className="stepper-number">{idx + 1}</span>
+            <Badge tone={badgeTone}>{st.status}</Badge>
+          </div>
+          <strong className="stepper-title">{st.name}</strong>
+          <p className="stepper-desc">{st.description}</p>
+        </div>;
+      })}
+    </div>
+    {run?.reason && <div className={`gate-rationale-box ${isBlocked ? 'rationale-blocked' : 'rationale-allowed'}`}>
+      <Icon name="shield" size={18} />
+      <div>
+        <strong>Decision Rationale ({isBlocked ? 'Gate Blocked' : 'Gate Allowed'})</strong>
+        <p>{run.reason}</p>
+      </div>
+    </div>}
+  </section>;
 }
 
 export default function EvaluationConsole({ candidate, onCandidate, onRun, onPreview, loading, error,
@@ -44,6 +93,7 @@ export default function EvaluationConsole({ candidate, onCandidate, onRun, onPre
     <div className="section-title"><h2>Evaluation results</h2>{!run && <Badge>{loading ? 'In progress' : 'Awaiting run'}</Badge>}</div>
     {run ? <div className="stack">
       <RunInfo run={run} source={source} />
+      <FiveStageStepper run={run} loading={loading} candidate={candidate} />
       <div className="metrics">
         <Metric label="Total scenarios" value={run.total_tests} icon="layers" />
         <Metric label="Passed scenarios" value={run.passed} icon="check" tone="success" />

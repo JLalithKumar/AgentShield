@@ -14,11 +14,11 @@ def test_post_evaluation_endpoint(client):
     assert "run_id" in data
     assert data["baseline_version"] == "v1.0"
     assert data["candidate_version"] == "v1.1"
-    assert data["total_tests"] == 8
-    assert data["passed"] == 7
+    assert data["total_tests"] == 24
+    assert data["passed"] == 23
     assert data["critical_regressions"] == 1
     assert data["release_decision"] == "BLOCK"
-    assert len(data["results"]) == 8
+    assert len(data["results"]) == 24
 
     run_id = data["run_id"]
 
@@ -34,7 +34,7 @@ def test_post_evaluation_endpoint(client):
     assert traces_resp.status_code == 200
     trace_data = traces_resp.json()
     assert trace_data["run_id"] == run_id
-    assert len(trace_data["traces"]) == 8
+    assert len(trace_data["traces"]) == 24
 
     t002_trace = next(t for t in trace_data["traces"] if t["scenario_id"] == "T002")
     assert t002_trace["tool_status"] == "FAILED"
@@ -51,7 +51,7 @@ def test_candidate_v1_2_api_release_allowed(client):
     response = client.post("/api/evaluations", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["passed"] == 8
+    assert data["passed"] == 24
     assert data["critical_regressions"] == 0
     assert data["release_decision"] == "ALLOW"
 
@@ -60,7 +60,7 @@ def test_scenarios_catalog_api(client):
     resp = client.get("/api/scenarios")
     assert resp.status_code == 200
     scenarios = resp.json()
-    assert len(scenarios) == 8
+    assert len(scenarios) == 24
 
     resp_single = client.get("/api/scenarios/T002")
     assert resp_single.status_code == 200
