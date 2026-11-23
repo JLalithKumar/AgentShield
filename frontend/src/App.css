@@ -113,7 +113,7 @@ nav button {
   background: transparent !important;
   text-align: left;
   font-weight: 500;
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-body);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -358,14 +358,14 @@ input, select {
   background-color: var(--surface) !important;
   color: var(--text) !important;
   font-weight: 400;
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-body);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input:focus, select:focus {
   border-color: var(--primary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(54, 91, 163, 0.15);
+  box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.14);
 }
 
 select {
@@ -428,7 +428,7 @@ select:disabled {
   font-size: var(--label-size);
   font-weight: 600;
   border-radius: var(--control-radius);
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-heading);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 

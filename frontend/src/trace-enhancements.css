@@ -295,7 +295,7 @@
 }
 
 .critical-policy-code {
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-heading);
   font-weight: 600;
   color: #991B1B;
   overflow-wrap: anywhere;

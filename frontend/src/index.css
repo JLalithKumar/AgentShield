@@ -1,40 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
   color-scheme: only light !important;
 
-  /* Exact Design System Palette — High Contrast WCAG 2.2 AA */
+  /* Stitch Design System Palette & Tokens */
+  --primary: #4338CA;
+  --primary-hover: #4F46E5;
+  --primary-active: #3730A3;
+  --primary-light: #EEF2FF;
+  --primary-border: #C7D2FE;
+
+  --cyan: #0EA5E9;
+  --cyan-hover: #0284C7;
+  --cyan-soft: #E0F2FE;
+  --cyan-border: #BAE6FD;
+
   --background: #F8FAFC;
   --surface: #FFFFFF;
   --surface-secondary: #F1F5F9;
-  --primary: #365BA3;
-  --primary-hover: #234382;
-  --text: #1E293B;
-  --secondary: #475569; /* 7.0:1 contrast ratio against white */
-  --border: #E2E8F0;
-  --hover: #F1F5F9;
-  --blue-soft: #EFF6FF;
-  --success: #166534; /* 6.5:1 contrast against white */
-  --success-soft: #F0FDF4;
-  --danger: #B91C1C; /* 6.3:1 contrast against white */
-  --danger-soft: #FEF2F2;
-  --warning: #B45309;
-  --warning-ink: #92400E; /* 5.9:1 contrast against white */
-  --warning-soft: #FFFBEB;
+  --surface-dim: #E2E8F0;
 
-  /* Typography & Scale conforming to WCAG 2.2 AA & Enterprise Spec */
-  --body-size: 16px;
-  --label-size: 14px;
-  --caption-size: 13px;
-  --title-size: clamp(28px, 2.5vw, 32px);
+  --text: #0F172A;
+  --text-body: #334155;
+  --secondary: #64748B;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --hover: #F8FAFC;
+  --blue-soft: #EFF6FF;
+
+  /* Status & Release Decisions */
+  --success: #16A34A;
+  --success-dark: #15803D;
+  --success-soft: #F0FDF4;
+  --success-border: #BBF7D0;
+
+  --danger: #DC2626;
+  --danger-dark: #B91C1C;
+  --danger-soft: #FEF2F2;
+  --danger-border: #FECACA;
+
+  --warning: #D97706;
+  --warning-ink: #B45309;
+  --warning-soft: #FFFBEB;
+  --warning-border: #FDE68A;
+
+  /* Typography Stack */
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Scale & Metrics */
+  --body-size: 15px;
+  --label-size: 13px;
+  --caption-size: 12px;
+  --title-size: clamp(28px, 2.5vw, 34px);
   --heading-size: 20px;
   --metric-size: clamp(28px, 2.4vw, 32px);
-  --panel-radius: 12px;
-  --control-radius: 8px;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
 
-  font: 400 var(--body-size)/1.6 'Poppins', Arial, sans-serif;
-  color: var(--text) !important;
+  --panel-radius-sm: 8px;
+  --panel-radius: 12px;
+  --panel-radius-lg: 16px;
+  --panel-radius-xl: 24px;
+  --control-radius: 8px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
+  --shadow-xl: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
+
+  font: 400 var(--body-size)/1.6 var(--font-body);
+  color: var(--text-body) !important;
   background: var(--background) !important;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -46,7 +82,7 @@
 *::after {
   box-sizing: border-box;
   color-scheme: only light !important;
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 html,
@@ -54,9 +90,15 @@ body,
 #root {
   min-height: 100%;
   background: var(--background) !important;
-  color: var(--text) !important;
+  color: var(--text-body) !important;
   color-scheme: only light !important;
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 body {
@@ -69,7 +111,7 @@ body, h1, h2, h3, p, ol, dl, dd, blockquote {
 }
 
 body, button, input, select, textarea, table, pre, code, kbd, samp {
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
 button, input, select, textarea, pre {
