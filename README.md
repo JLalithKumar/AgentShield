@@ -433,7 +433,7 @@ This is a **Techthon MVP**, not a certified banking security product. Before an 
 ## Team and acknowledgments
 
 **Team Code Battalions** · **Sri Shakthi Institute of Engineering and Technology**  
-Dharshan R · Lathika Sri B · Prathisha R · Lalith Kumar J · Yuvasri M
+Dharshan R · Prathisha R · Lathika Sri B · Lalith Kumar J · Yuvasri M
 
 Built as a student prototype for **Visionet Techthon 2026**. The architecture and demonstrations are intended to show technical feasibility using synthetic BFSI scenarios; this repository does not imply certification or endorsement by any bank or platform provider.
 
