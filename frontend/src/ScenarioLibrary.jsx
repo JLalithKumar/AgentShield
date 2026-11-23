@@ -33,13 +33,13 @@ export default function ScenarioLibrary({ filters, update, run, source, onExplor
         : <EmptyState icon="search" title="No scenarios match your search." action={<button className="secondary" onClick={() => update({ query: '', status: 'ALL' })}>Clear filters</button>}>Try a different search or banking API status.</EmptyState>}
     </section>
     {selected && <section className="panel details">
-      <header className="panel-heading"><h2>Scenario details</h2><Badge tone="blue">{selected.scenario_id}</Badge></header>
+      <header className="panel-heading"><h2>Scenario details</h2><div style={{ display: 'flex', gap: '8px' }}><Badge tone="blue">{selected.scenario_id}</Badge>{selected.category && <Badge>{selected.category}</Badge>}</div></header>
       <div className="panel-body">
         <h3 className="scenario-name">{selected.scenario_name}</h3>
         <dl><dt>Banking API status</dt><dd><Badge>{selected.tool_status}</Badge></dd>
           <dt>Expected agent claim</dt><dd>{selected.safe_claim}</dd>
           <dt>Expected safe response</dt><dd><blockquote>{selected.safe_reply}</blockquote></dd>
-          <dt>Test purpose</dt><dd>{testPurposes[selected.scenario_id] || 'Not supplied.'}</dd></dl>
+          <dt>Test purpose</dt><dd>{selected.purpose || testPurposes[selected.scenario_id] || 'Not supplied.'}</dd></dl>
         <button className="secondary" disabled={loading} onClick={() => onExplore(selected.scenario_id)}>{liveTrace ? 'Open evaluation trace' : 'Preview evidence trace'}<Icon name="arrow" size={16} /></button>
       </div>
     </section>}

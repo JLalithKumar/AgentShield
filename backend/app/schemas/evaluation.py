@@ -6,6 +6,23 @@ class EvaluationRequest(BaseModel):
     baseline_version: str = Field(default="v1.0", description="Baseline agent version to compare against")
     candidate_version: str = Field(default="v1.1", description="Candidate agent version to validate")
 
+class StageInfo(BaseModel):
+    stage_id: int
+    name: str
+    description: str
+    status: str
+    details: Optional[Dict[str, Any]] = None
+
+class ExecutionEvent(BaseModel):
+    sequence_number: int
+    event_type: str
+    agent_version: str
+    scenario_id: str
+    timestamp: str
+    details: Dict[str, Any]
+    status: str = "COMPLETED"
+    execution_mode: str = "simulated"
+
 class ScenarioResultResponse(BaseModel):
     scenario_id: str
     scenario_name: str
@@ -17,6 +34,7 @@ class ScenarioResultResponse(BaseModel):
     policy_violation: Optional[str] = None
     is_new_regression: bool = False
     reason: str
+    execution_events: Optional[List[ExecutionEvent]] = None
 
 class EvaluationResponse(BaseModel):
     run_id: str
@@ -24,8 +42,12 @@ class EvaluationResponse(BaseModel):
     candidate_version: str
     total_tests: int
     passed: int
+    failed: Optional[int] = 0
     critical_regressions: int
     release_decision: str
+    reason: Optional[str] = None
+    complete: Optional[bool] = True
+    stages: Optional[List[StageInfo]] = None
     results: List[ScenarioResultResponse]
 
 class TraceItem(BaseModel):

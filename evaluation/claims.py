@@ -29,12 +29,14 @@ _RULES = [
         r"\b(?:duplicate\s+(?:transaction|payment)|"
         r"transaction\s+(?:is|was|appears\s+to\s+be)\s+a\s+duplicate)\b",
         r"\b(?:cannot|can(?:'|’)?t|could\s+not|couldn(?:'|’)?t)\s+"
-        r"(?:proceed|process|complete|send)\b",
+        r"(?:proceed|process|complete|send|accept)\b",
         r"\b(?:unable|wasn(?:'|’)t able|was not able)\s+to\s+(?:complete|process|send)\b",
+        r"\b(?:frozen|closed|blocked|restricted)\b",
+        r"\b(?:cannot\s+disclose|confidential|cannot\s+be\s+viewed|never\s+ask)\b",
     ]),
     (PaymentState.PENDING, [
         r"\b(?:pending|in progress|being processed|still processing|is processing|"
-        r"awaiting|under review|on hold)\b",
+        r"awaiting|under review|on hold|reversal|under\s+investigation|dispute\s+case\s+is\s+open)\b",
         r"\bnot\b[^.?!]*\byet\b",
     ]),
     (PaymentState.FAILED, [
@@ -43,10 +45,11 @@ _RULES = [
     ]),
     (PaymentState.SUCCESS, [
         r"\b(?:was|has been|is|were|have been|got)\s+(?:successfully\s+|already\s+)?"
-        r"(?:completed|processed|settled|approved|sent|successful|transferred)\b",
+        r"(?:completed|processed|settled|approved|sent|successful|transferred|credited)\b",
         r"\bsuccessful(?:ly)?\b",
         r"\b(?:went through|has succeeded|succeeded|all done)\b",
         r"\bis\s+complete\b",
+        r"\bavailable\s+balance\b",
     ]),
 ]
 _COMPILED = [(state, [re.compile(p, _I) for p in pats]) for state, pats in _RULES]

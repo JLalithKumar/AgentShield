@@ -1,12 +1,12 @@
 from backend.app.runner.loader import load_scenarios, get_scenario
 
 def test_scenario_loading():
-    """Requirement 10: Scenario loading and verification of 8 authoritative scenarios."""
+    """Requirement 10: Scenario loading and verification of 24 authoritative scenarios."""
     scenarios = load_scenarios()
-    assert len(scenarios) == 8
+    assert len(scenarios) == 24
 
     scenario_ids = [s["scenario_id"] for s in scenarios]
-    expected_ids = ["T001", "T002", "T003", "T004", "T005", "T006", "T007", "T008"]
+    expected_ids = [f"T{i:03d}" for i in range(1, 25)]
     assert scenario_ids == expected_ids
 
     # Verify T001 and T002 attributes

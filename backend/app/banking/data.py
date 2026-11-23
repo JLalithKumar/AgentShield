@@ -30,6 +30,15 @@ SYNTHETIC_ACCOUNTS: Dict[str, dict] = {
         "status": "FROZEN",
         "account_type": "SAVINGS",
         "owner_name": "Rohan Verma"
+    },
+    "ACC1004": {
+        "account_id": "ACC1004",
+        "customer_id": "CUS1004",
+        "balance": 0.00,
+        "currency": "INR",
+        "status": "CLOSED",
+        "account_type": "SAVINGS",
+        "owner_name": "Vikram Sen"
     }
 }
 
@@ -45,7 +54,7 @@ HISTORICAL_TRANSACTIONS: Dict[str, dict] = {
         "type": "PAYMENT",
         "status": "SUCCESS",
         "message": "Direct transfer to supplier",
-        "timestamp": (datetime.utcnow() - timedelta(days=2)).isoformat()
+        "timestamp": (datetime.now() - timedelta(days=2)).isoformat()
     },
     "TXN-INIT-002": {
         "transaction_id": "TXN-INIT-002",
@@ -56,7 +65,7 @@ HISTORICAL_TRANSACTIONS: Dict[str, dict] = {
         "type": "PAYMENT",
         "status": "SUCCESS",
         "message": "Utility bill payment",
-        "timestamp": (datetime.utcnow() - timedelta(days=1)).isoformat()
+        "timestamp": (datetime.now() - timedelta(days=1)).isoformat()
     },
     "TXN-DUP-001": {
         "transaction_id": "TXN-DUP-001",
@@ -67,6 +76,6 @@ HISTORICAL_TRANSACTIONS: Dict[str, dict] = {
         "type": "PAYMENT",
         "status": "SUCCESS",
         "message": "Previously processed transaction for duplicate test",
-        "timestamp": (datetime.utcnow() - timedelta(hours=1)).isoformat()
+        "timestamp": (datetime.now() - timedelta(hours=1)).isoformat()
     }
 }

@@ -26,8 +26,8 @@ function makeApiRun(candidate) {
     run_id: `history-run-${candidate}`,
     baseline_version: 'v1.0',
     candidate_version: candidate,
-    total_tests: 8,
-    passed: hasRegression ? 7 : 8,
+    total_tests: 24,
+    passed: hasRegression ? 23 : 24,
     critical_regressions: hasRegression ? 1 : 0,
     release_decision: hasRegression ? 'BLOCK' : 'ALLOW',
     results,
@@ -73,7 +73,7 @@ describe('AgentShield session-only evaluation history', () => {
     await user.click(screen.getByRole('button', { name: /evaluation history/i }));
     const historyTable = screen.getByRole('table');
     expect(within(historyTable).getByText('history-run-v1.1')).toBeInTheDocument();
-    expect(within(historyTable).getByText('7 / 8')).toBeInTheDocument();
+    expect(within(historyTable).getByText('23 / 24')).toBeInTheDocument();
     expect(within(historyTable).getByText('BLOCKED')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'View trace for history-run-v1.1' }));

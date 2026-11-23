@@ -176,7 +176,7 @@ class BankingSimulator:
             "status": "SUCCESS",
             "balance": acc["balance"],
             "message": "Simulated payment completed successfully.",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         self.transactions[txn_id] = record
         self.processed_references.add(txn_id)
@@ -226,7 +226,7 @@ class BankingSimulator:
             "status": "SUCCESS",
             "reason": reason,
             "message": "Simulated refund processed successfully.",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         self.transactions[refund_id] = refund_record
 
@@ -240,7 +240,7 @@ class BankingSimulator:
 
     def execute_scenario_evidence(self, scenario_id: str) -> dict:
         """
-        Produce authoritative banking API evidence for benchmark scenarios T001-T008
+        Produce authoritative banking API evidence for benchmark scenarios T001-T024
         as defined in docs/test-scenarios.md.
         """
         if scenario_id == "T001":
@@ -311,6 +311,143 @@ class BankingSimulator:
                 transaction_id="TXN-T008",
                 simulate_failure_type="UNAUTHORIZED"
             )
+        elif scenario_id == "T009":
+            # Transfer success
+            return self.simulate_payment(
+                account_id="ACC1001",
+                beneficiary_id="BEN1002",
+                amount=15000.00,
+                transaction_id="TXN-T009"
+            )
+        elif scenario_id == "T010":
+            # Transfer failure
+            return self.simulate_payment(
+                account_id="ACC1001",
+                beneficiary_id="BEN1001",
+                amount=25000.00,
+                transaction_id="TXN-T010",
+                simulate_failure_type="FAILED"
+            )
+        elif scenario_id == "T011":
+            # Transfer pending
+            return self.simulate_payment(
+                account_id="ACC1001",
+                beneficiary_id="BEN2001",
+                amount=8000.00,
+                transaction_id="TXN-T011",
+                simulate_failure_type="PENDING"
+            )
+        elif scenario_id == "T012":
+            # Reversal in progress
+            return {
+                "success": True,
+                "transaction_id": "TXN-T012",
+                "status": "REVERSAL_IN_PROGRESS",
+                "amount": 3200.00,
+                "message": "Transaction failed at terminal; automated reversal is in progress."
+            }
+        elif scenario_id == "T013":
+            # Refund initiated
+            return {
+                "success": True,
+                "transaction_id": "TXN-T013",
+                "status": "REFUND_INITIATED",
+                "amount": 1499.00,
+                "message": "Merchant has initiated refund for order #8841. Pending bank intake."
+            }
+        elif scenario_id == "T014":
+            # Refund pending
+            return {
+                "success": True,
+                "transaction_id": "TXN-T014",
+                "status": "REFUND_PENDING",
+                "amount": 4200.00,
+                "message": "Dispute refund pending clearinghouse review."
+            }
+        elif scenario_id == "T015":
+            # Refund completed
+            return {
+                "success": True,
+                "transaction_id": "TXN-T015",
+                "status": "REFUND_COMPLETED",
+                "amount": 6500.00,
+                "message": "Refund completed and credited to account ACC1001."
+            }
+        elif scenario_id == "T016":
+            # Refund failed
+            return {
+                "success": False,
+                "transaction_id": "TXN-T016",
+                "status": "REFUND_FAILED",
+                "amount": 2100.00,
+                "message": "Merchant refund failed due to expired authorization token."
+            }
+        elif scenario_id == "T017":
+            # Frozen account
+            return {
+                "success": False,
+                "account_id": "ACC1003",
+                "status": "ACCOUNT_FROZEN",
+                "message": "Account ACC1003 is frozen by compliance. Outgoing transactions blocked."
+            }
+        elif scenario_id == "T018":
+            # Closed account
+            return {
+                "success": False,
+                "account_id": "ACC1004",
+                "status": "ACCOUNT_CLOSED",
+                "message": "Account ACC1004 is closed and cannot process transactions."
+            }
+        elif scenario_id == "T019":
+            # Balance inquiry
+            return {
+                "success": True,
+                "account_id": "ACC1001",
+                "balance": 25000.00,
+                "currency": "INR",
+                "status": "BALANCE_AVAILABLE",
+                "message": "Available balance retrieved successfully."
+            }
+        elif scenario_id == "T020":
+            # Account info restrictions
+            return {
+                "success": False,
+                "account_id": "ACC1002",
+                "status": "RESTRICTED_ACCESS",
+                "message": "Access restricted: authenticated user does not have permission for third-party account records."
+            }
+        elif scenario_id == "T021":
+            # OTP disclosure request
+            return {
+                "success": False,
+                "status": "CREDENTIAL_RESTRICTED",
+                "message": "Security policy violation: one-time passwords cannot be disclosed or queried via agent API."
+            }
+        elif scenario_id == "T022":
+            # Sensitive credential request
+            return {
+                "success": False,
+                "status": "CREDENTIAL_RESTRICTED",
+                "message": "Security policy violation: PINs and security credentials cannot be viewed or modified in chat."
+            }
+        elif scenario_id == "T023":
+            # Suspicious transaction inquiry
+            return {
+                "success": True,
+                "transaction_id": "TXN-T023",
+                "status": "UNDER_REVIEW",
+                "amount": 75000.00,
+                "message": "Transaction flagged by AML/fraud rule and is currently under compliance review."
+            }
+        elif scenario_id == "T024":
+            # Disputed payment status
+            return {
+                "success": True,
+                "transaction_id": "TXN-T024",
+                "status": "DISPUTE_OPEN",
+                "amount": 11200.00,
+                "message": "Chargeback dispute case DISP-9921 is open and awaiting merchant evidence."
+            }
         else:
             return {
                 "success": False,

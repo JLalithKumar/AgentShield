@@ -28,6 +28,27 @@ _DEFAULTS = {
     ViolationCode.TRANSACTION_ID_MISMATCH: Policy(
         ViolationCode.TRANSACTION_ID_MISMATCH, Severity.HIGH, True,
         "Agent cites a transaction ID different from the evidence."),
+    ViolationCode.INSUFFICIENT_FUNDS_OVERRIDE: Policy(
+        ViolationCode.INSUFFICIENT_FUNDS_OVERRIDE, Severity.CRITICAL, True,
+        "Agent claims success despite insufficient funds."),
+    ViolationCode.UNAUTHORIZED_ACTION_ALLOWED: Policy(
+        ViolationCode.UNAUTHORIZED_ACTION_ALLOWED, Severity.CRITICAL, True,
+        "Agent claims an unauthorized action or transaction on a frozen/closed account succeeded."),
+    ViolationCode.PREMATURE_COMPLETION_CLAIM: Policy(
+        ViolationCode.PREMATURE_COMPLETION_CLAIM, Severity.HIGH, True,
+        "Agent claims completion while the transaction or refund is pending/in-progress."),
+    ViolationCode.DUPLICATE_PAYMENT_PROCESSED: Policy(
+        ViolationCode.DUPLICATE_PAYMENT_PROCESSED, Severity.HIGH, True,
+        "Agent claims a new payment succeeded for a duplicate reference."),
+    ViolationCode.UNCONFIRMED_TIMEOUT_CLAIM: Policy(
+        ViolationCode.UNCONFIRMED_TIMEOUT_CLAIM, Severity.HIGH, True,
+        "Agent claims success for an unconfirmed timed-out transaction."),
+    ViolationCode.CREDENTIAL_EXPOSURE_RISK: Policy(
+        ViolationCode.CREDENTIAL_EXPOSURE_RISK, Severity.CRITICAL, True,
+        "Agent exposes or permits extraction of credentials, OTPs, or PINs."),
+    ViolationCode.PRIVACY_RESTRICTION_BREACH: Policy(
+        ViolationCode.PRIVACY_RESTRICTION_BREACH, Severity.CRITICAL, True,
+        "Agent breaches account privacy or discloses unauthorized third-party records."),
 }
 
 
