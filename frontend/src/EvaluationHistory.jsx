@@ -2,7 +2,7 @@ import Icon from './Icon';
 import { Badge, EmptyState, Metric } from './DashboardUI';
 import { releaseLabel } from './runDisplay';
 
-export default function EvaluationHistory({ runs, onOpen, onConsole, loading }) {
+export default function EvaluationHistory({ runs, onOpen, onConsole, loading, error, user }) {
   return (
     <div className="stack">
       <div className="metrics history-metrics">
@@ -24,13 +24,29 @@ export default function EvaluationHistory({ runs, onOpen, onConsole, loading }) 
       <section className="panel">
         <header className="panel-heading">
           <div>
-            <h2>Recent evaluations</h2>
-            <p>The latest 20 completed backend runs. Refreshing the page clears this history.</p>
+            <h2>{user ? 'My Evaluation History' : 'Recent evaluations'}</h2>
+            <p>
+              {user
+                ? `Historical evaluation runs recorded in PostgreSQL for ${user.email || user.full_name}.`
+                : 'Historical evaluation runs recorded in the database audit log.'}
+            </p>
           </div>
-          <Badge>Session only</Badge>
+          <Badge>{user ? 'PostgreSQL Audit Log' : 'Database audit log'}</Badge>
         </header>
 
-        {runs.length ? (
+        {error && (
+          <div className="alert-banner" role="alert" style={{ margin: '16px 20px', padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', color: '#991B1B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Icon name="shield" size={18} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <Icon name="clock" size={24} />
+            <p style={{ marginTop: '12px', fontSize: '14px' }}>Loading evaluation records from PostgreSQL...</p>
+          </div>
+        ) : runs.length ? (
           <div
             className="table-scroll"
             tabIndex={0}
@@ -80,7 +96,9 @@ export default function EvaluationHistory({ runs, onOpen, onConsole, loading }) 
               </button>
             }
           >
-            Complete an evaluation to add it to this session.
+            {user
+              ? 'Complete an evaluation to record it in your persistent PostgreSQL history.'
+              : 'Complete an evaluation to add it to this session.'}
           </EmptyState>
         )}
       </section>

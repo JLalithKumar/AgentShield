@@ -32,7 +32,16 @@ const pages = {
   ],
 };
 
-export default function WorkspaceShell({ view, navigate, historyCount, children }) {
+export default function WorkspaceShell({
+  view,
+  navigate,
+  historyCount,
+  user,
+  onOpenSignIn,
+  onSignOut,
+  onGoHome,
+  children
+}) {
   const [expanded, setExpanded] = useState(false);
   const toggle = useRef(null);
   const [label, , title, description] = pages[view] || pages.evaluations;
@@ -55,7 +64,14 @@ export default function WorkspaceShell({ view, navigate, historyCount, children 
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <aside className="sidebar" aria-label="Application navigation">
         <div className="brand-row">
-          <div className="brand">
+          <div
+            className="brand"
+            tabIndex={0}
+            role="button"
+            onClick={onGoHome}
+            style={{ cursor: 'pointer' }}
+            title="Return to homepage"
+          >
             <span className="brand-mark" aria-hidden="true">
               <Icon name="shield" size={26} />
             </span>
@@ -78,13 +94,25 @@ export default function WorkspaceShell({ view, navigate, historyCount, children 
         </div>
         <div id="sidebar-content" className={`sidebar-content ${expanded ? 'expanded' : ''}`}>
           <div className="workspace-card" role="region" aria-label="Current Workspace">
-            <span className="workspace-avatar" aria-hidden="true">CB</span>
+            <span className="workspace-avatar" aria-hidden="true">
+              {user ? (user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U') : 'CB'}
+            </span>
             <div>
-              <small>Workspace</small>
-              <strong>Code Battalions</strong>
+              <small>{user ? 'Logged in as' : 'Workspace'}</small>
+              <strong>{user ? user.full_name : 'Code Battalions'}</strong>
             </div>
           </div>
           <nav aria-label="Primary navigation">
+            {onGoHome && (
+              <button
+                type="button"
+                onClick={onGoHome}
+                aria-label="Public Homepage"
+              >
+                <Icon name="arrow" size={19} aria-hidden="true" style={{ transform: 'rotate(180deg)' }} />
+                <span>Public Homepage</span>
+              </button>
+            )}
             {Object.entries(pages).map(([id, [name, icon]]) => (
               <button
                 key={id}
@@ -120,9 +148,39 @@ export default function WorkspaceShell({ view, navigate, historyCount, children 
             <Icon name="chevron" size={13} aria-hidden="true" />
             <strong aria-current="location">{label}</strong>
           </nav>
-          <div className="environment" role="status" aria-label="System environment">
-            <span><i aria-hidden="true" />Deterministic Mode</span>
-            <span>24 Banking Scenarios</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="environment" role="status" aria-label="System environment">
+              <span><i aria-hidden="true" />Deterministic Mode</span>
+              <span>24 Banking Scenarios</span>
+            </div>
+
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--secondary)', fontWeight: 500 }}>
+                  {user.email}
+                </span>
+                <button
+                  type="button"
+                  className="secondary"
+                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  onClick={onSignOut}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              onOpenSignIn && (
+                <button
+                  type="button"
+                  className="secondary"
+                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  onClick={onOpenSignIn}
+                >
+                  Sign In
+                </button>
+              )
+            )}
           </div>
         </header>
         <main className="content" id="main-content" tabIndex={-1}>

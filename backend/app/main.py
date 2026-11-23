@@ -7,6 +7,7 @@ from backend.app.api.health import router as health_router
 from backend.app.api.evaluations import router as evaluations_router
 from backend.app.api.scenarios import router as scenarios_router
 from backend.app.api.banking import router as banking_router
+from backend.app.api.auth import router as auth_router
 
 # Initialize database schema
 init_db()
@@ -33,6 +34,7 @@ app.include_router(health_router)
 app.include_router(health_router, prefix=settings.API_V1_STR)
 
 # Mount functional API routers
+app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(evaluations_router, prefix=settings.API_V1_STR)
 app.include_router(scenarios_router, prefix=settings.API_V1_STR)
 app.include_router(banking_router, prefix=settings.API_V1_STR)
