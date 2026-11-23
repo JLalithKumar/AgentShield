@@ -1,6 +1,7 @@
 .evidence {
   overflow-wrap: anywhere;
-  background: var(--surface);
+  background: var(--surface) !important;
+  color: var(--text) !important;
 }
 
 .evidence-body {
@@ -24,8 +25,9 @@
 .evidence-pair > div {
   padding: 16px;
   border: 1px solid var(--border);
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   border-radius: 8px;
+  color: var(--text) !important;
 }
 
 .evidence-pair span {
@@ -66,9 +68,9 @@
 }
 
 .evidence pre {
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   border: 1px solid var(--border);
-  color: var(--text);
+  color: var(--text) !important;
   padding: 16px;
   border-radius: 8px;
   white-space: pre-wrap;
@@ -86,10 +88,11 @@
 
 /* Five-Stage Stepper Layout */
 .stage-stepper-panel {
-  background: var(--surface);
+  background: var(--surface) !important;
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
   overflow: hidden;
+  color: var(--text) !important;
 }
 
 .stepper-grid {
@@ -101,13 +104,14 @@
 
 .stepper-step {
   padding: 16px 14px;
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   border: 1px solid var(--border);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+  color: var(--text) !important;
 }
 
 .stepper-completed, .stepper-allowed {
@@ -192,7 +196,7 @@
 
 /* Critical Safety Regression Alert Card (Enterprise Table Structure) */
 .critical-regression-card {
-  background: #FEF2F2;
+  background: #FEF2F2 !important;
   border: 1px solid #FECACA;
   border-left: 4px solid #DC2626;
   border-radius: 8px;
@@ -200,7 +204,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  color-scheme: only light;
+  color-scheme: only light !important;
+  color: #1E293B !important;
 }
 
 .critical-regression-header {
@@ -234,11 +239,12 @@
 .critical-regression-table {
   width: 100%;
   border-collapse: collapse;
-  background: #FFFFFF;
+  background: #FFFFFF !important;
   border: 1px solid #FEE2E2;
   border-radius: 6px;
   overflow: hidden;
   font-size: 13px;
+  color: #1E293B !important;
 }
 
 .critical-regression-table tr {
@@ -345,9 +351,10 @@
 
 /* Observable Execution Timeline */
 .timeline-panel {
-  background: var(--surface);
+  background: var(--surface) !important;
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
+  color: var(--text) !important;
 }
 
 .timeline-list {
@@ -362,10 +369,11 @@
   gap: 14px;
   align-items: flex-start;
   padding: 12px 16px;
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   border: 1px solid var(--border);
   border-radius: 8px;
   transition: background-color 0.15s ease;
+  color: var(--text) !important;
 }
 
 .timeline-event:hover {

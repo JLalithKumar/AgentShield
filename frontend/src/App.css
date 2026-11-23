@@ -2,8 +2,9 @@
 .workspace {
   --rail: 240px;
   min-height: 100vh;
-  background: var(--background);
-  color-scheme: only light;
+  background: var(--background) !important;
+  color: var(--text) !important;
+  color-scheme: only light !important;
 }
 
 .sidebar {
@@ -13,10 +14,11 @@
   width: var(--rail);
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: var(--surface) !important;
   border-right: 1px solid var(--border);
   overflow-y: auto;
-  color-scheme: only light;
+  color-scheme: only light !important;
+  color: var(--text) !important;
 }
 
 .brand-row {
@@ -72,7 +74,8 @@
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--background);
+  background: var(--background) !important;
+  color: var(--text) !important;
 }
 
 .workspace-avatar {
@@ -104,10 +107,10 @@ nav button {
   gap: 12px;
   width: 100%;
   padding: 12px 16px;
-  color: var(--text);
+  color: var(--text) !important;
   border: 0;
   border-radius: 8px;
-  background: transparent;
+  background: transparent !important;
   text-align: left;
   font-weight: 500;
   font-family: 'Poppins', Arial, sans-serif;
@@ -129,8 +132,8 @@ nav button:hover, .menu-toggle:hover {
 }
 
 nav button[aria-current="page"] {
-  color: var(--primary);
-  background: var(--blue-soft);
+  color: var(--primary) !important;
+  background: var(--blue-soft) !important;
   box-shadow: inset 3px 0 var(--primary);
   font-weight: 600;
 }
@@ -155,7 +158,8 @@ nav button[aria-current="page"] {
   min-height: 100vh;
   margin-left: var(--rail);
   min-width: 0;
-  background: var(--background);
+  background: var(--background) !important;
+  color: var(--text) !important;
 }
 
 .topbar {
@@ -167,7 +171,8 @@ nav button[aria-current="page"] {
   flex-wrap: wrap;
   gap: 12px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--surface) !important;
+  color: var(--text) !important;
 }
 
 .breadcrumb {
@@ -216,7 +221,8 @@ nav button[aria-current="page"] {
   margin: auto;
   padding: 32px 32px 48px;
   min-width: 0;
-  background: var(--background);
+  background: var(--background) !important;
+  color: var(--text) !important;
 }
 
 .content:focus {
@@ -261,9 +267,10 @@ nav button[aria-current="page"] {
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
-  background: var(--surface);
+  background: var(--surface) !important;
   box-shadow: var(--shadow);
-  color-scheme: only light;
+  color-scheme: only light !important;
+  color: var(--text) !important;
 }
 
 .panel-heading, .section-title, .run-info {
@@ -348,8 +355,8 @@ input, select {
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: var(--control-radius);
-  background-color: var(--surface);
-  color: var(--text);
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
   font-weight: 400;
   font-family: 'Poppins', Arial, sans-serif;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -430,8 +437,8 @@ select:disabled {
 }
 
 .primary, .secondary {
-  padding: 9px 16px;
-  min-height: 42px;
+  padding: 10px 18px;
+  min-height: 44px;
 }
 
 .primary {
@@ -486,8 +493,9 @@ select:disabled {
   display: flex;
   flex-direction: column;
   padding: 20px 24px 16px;
-  background: var(--surface);
+  background: var(--surface) !important;
   border-color: var(--border);
+  color: var(--text) !important;
 }
 
 .workflow h2 {
@@ -570,7 +578,8 @@ select:disabled {
 .empty-state {
   padding: 36px 20px;
   text-align: center;
-  background: var(--surface);
+  background: var(--surface) !important;
+  color: var(--text) !important;
 }
 
 .empty-icon {
@@ -615,26 +624,31 @@ select:disabled {
 .tone-neutral {
   color: var(--secondary);
   background: var(--surface-secondary);
+  border: 1px solid var(--border);
 }
 
 .tone-blue {
   color: var(--primary);
   background: var(--blue-soft);
+  border: 1px solid #bfdbfe;
 }
 
 .tone-danger {
   color: var(--danger);
   background: var(--danger-soft);
+  border: 1px solid #fecaca;
 }
 
 .tone-success {
   color: var(--success);
   background: var(--success-soft);
+  border: 1px solid #bbf7d0;
 }
 
 .tone-warning {
   color: var(--warning-ink);
   background: var(--warning-soft);
+  border: 1px solid #fde68a;
   box-shadow: inset 2px 0 var(--warning);
 }
 
@@ -661,13 +675,13 @@ select:disabled {
 
 .metric {
   padding: 16px 20px;
-  background: var(--surface);
+  background: var(--surface) !important;
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
 }
 
 .metric-label {
-  color: var(--secondary);
+  color: var(--secondary) !important;
   font-size: var(--label-size);
   font-weight: 500;
 }
@@ -675,11 +689,11 @@ select:disabled {
 .metric strong {
   display: block;
   margin-top: 8px;
-  font-size: clamp(22px, 2vw, 30px);
+  font-size: var(--metric-size);
   line-height: 1.3;
   letter-spacing: -0.04em;
   overflow-wrap: anywhere;
-  color: var(--text);
+  color: var(--text) !important;
   font-weight: 600;
 }
 
@@ -701,8 +715,9 @@ select:disabled {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--surface);
+  background: var(--surface) !important;
   font-size: var(--label-size);
+  color: var(--text) !important;
 }
 
 th, td {
@@ -712,15 +727,15 @@ th, td {
 }
 
 th {
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   font-size: var(--caption-size);
-  color: var(--secondary);
+  color: var(--secondary) !important;
   font-weight: 600;
   white-space: nowrap;
 }
 
 td {
-  color: var(--text);
+  color: var(--text) !important;
 }
 
 td .badge, td .text-button {
@@ -810,10 +825,10 @@ dd {
 
 blockquote {
   padding: 12px 16px;
-  background: var(--surface-secondary);
+  background: var(--surface-secondary) !important;
   border-left: 3px solid var(--primary);
   border-radius: 0 6px 6px 0;
-  color: var(--text);
+  color: var(--text) !important;
 }
 
 .trace-layout {
