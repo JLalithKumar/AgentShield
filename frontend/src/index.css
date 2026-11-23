@@ -1,39 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-  color-scheme: only light;
+  color-scheme: only light !important;
 
-  /* Exact Design System Palette */
+  /* Exact Design System Palette — High Contrast WCAG 2.2 AA */
   --background: #F8FAFC;
   --surface: #FFFFFF;
   --surface-secondary: #F1F5F9;
   --primary: #365BA3;
-  --primary-hover: #294781;
+  --primary-hover: #234382;
   --text: #1E293B;
-  --secondary: #64748B;
+  --secondary: #475569; /* 7.0:1 contrast ratio against white */
   --border: #E2E8F0;
   --hover: #F1F5F9;
   --blue-soft: #EFF6FF;
-  --success: #15803D;
+  --success: #166534; /* 6.5:1 contrast against white */
   --success-soft: #F0FDF4;
-  --danger: #DC2626;
+  --danger: #B91C1C; /* 6.3:1 contrast against white */
   --danger-soft: #FEF2F2;
   --warning: #B45309;
-  --warning-ink: #B45309;
+  --warning-ink: #92400E; /* 5.9:1 contrast against white */
   --warning-soft: #FFFBEB;
 
-  /* Typography & Scale */
-  --body-size: 14px;
-  --label-size: 13px;
-  --caption-size: 12px;
-  --title-size: clamp(26px, 2.3vw, 30px);
+  /* Typography & Scale conforming to WCAG 2.2 AA & Enterprise Spec */
+  --body-size: 16px;
+  --label-size: 14px;
+  --caption-size: 13px;
+  --title-size: clamp(28px, 2.5vw, 32px);
+  --heading-size: 20px;
+  --metric-size: clamp(28px, 2.4vw, 32px);
   --panel-radius: 12px;
   --control-radius: 8px;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
 
   font: 400 var(--body-size)/1.6 'Poppins', Arial, sans-serif;
-  color: var(--text);
-  background: var(--background);
+  color: var(--text) !important;
+  background: var(--background) !important;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -43,7 +45,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  color-scheme: only light;
+  color-scheme: only light !important;
   font-family: 'Poppins', Arial, sans-serif;
 }
 
@@ -51,14 +53,15 @@ html,
 body,
 #root {
   min-height: 100%;
-  background: var(--background);
-  color: var(--text);
-  color-scheme: only light;
+  background: var(--background) !important;
+  color: var(--text) !important;
+  color-scheme: only light !important;
   font-family: 'Poppins', Arial, sans-serif;
 }
 
 body {
   min-width: 320px;
+  line-height: 1.6;
 }
 
 body, h1, h2, h3, p, ol, dl, dd, blockquote {
@@ -90,9 +93,10 @@ button, input, select, textarea {
   color: inherit;
 }
 
+/* Accessible focus visible ring — WCAG 2.2 AA */
 :focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  outline: 3px solid var(--primary) !important;
+  outline-offset: 2px !important;
 }
 
 svg {
@@ -112,13 +116,13 @@ h1 {
 }
 
 h2 {
-  font-size: 18px;
+  font-size: var(--heading-size);
   line-height: 1.4;
   letter-spacing: -0.02em;
 }
 
 h3 {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -129,4 +133,16 @@ small {
 ::selection {
   color: var(--primary-hover);
   background: #dce7fb;
+}
+
+/* Reduced Motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

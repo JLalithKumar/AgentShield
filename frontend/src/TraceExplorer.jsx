@@ -82,34 +82,38 @@ function ExecutionTimeline({ events, row }) {
   ];
   const list = (events && events.length) ? events : defaultEvents;
 
-  return <section className="panel timeline-panel" aria-label="Observable execution timeline">
-    <header className="panel-heading">
-      <div>
-        <h2>Observable execution timeline</h2>
-        <p>Sequence of 9 observable execution events recorded for {row.scenario_id}.</p>
-      </div>
-      <Badge tone="blue">9 Observable Events</Badge>
-    </header>
-    <div className="timeline-list">
-      {list.map((ev, i) => {
-        const descText = ev.details
-          ? Object.entries(ev.details).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ')
-          : (ev.desc || '');
-        return (
-          <div key={ev.sequence_number || i} className="timeline-event">
-            <div className="timeline-seq">{ev.sequence_number || i + 1}</div>
-            <div className="timeline-content">
-              <div className="timeline-meta">
-                <strong>{ev.event_type?.replace(/_/g, ' ') || ev.title}</strong>
-                <Badge tone={ev.execution_mode === 'live' ? 'blue' : 'neutral'}>[{ev.execution_mode || 'simulated'}]</Badge>
+  return (
+    <section className="panel timeline-panel" aria-label="Observable execution timeline">
+      <header className="panel-heading">
+        <div>
+          <h2>F. Observable execution timeline</h2>
+          <p>Sequence of 9 observable execution events recorded for {row.scenario_id}. Distinguishes deterministic simulation from live LLM observations.</p>
+        </div>
+        <Badge tone="blue">9 Observable Events</Badge>
+      </header>
+      <div className="timeline-list">
+        {list.map((ev, i) => {
+          const descText = ev.details
+            ? Object.entries(ev.details).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ')
+            : (ev.desc || '');
+          return (
+            <div key={ev.sequence_number || i} className="timeline-event">
+              <div className="timeline-seq" aria-hidden="true">{ev.sequence_number || i + 1}</div>
+              <div className="timeline-content">
+                <div className="timeline-meta">
+                  <strong>{ev.event_type?.replace(/_/g, ' ') || ev.title}</strong>
+                  <Badge tone={ev.execution_mode === 'live' ? 'blue' : 'neutral'}>
+                    [{ev.execution_mode || 'simulated'}]
+                  </Badge>
+                </div>
+                <p className="timeline-desc">{descText}</p>
               </div>
-              <p className="timeline-desc">{descText}</p>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  </section>;
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 export default function TraceExplorer({ run, source, selected, onSelect, onPreview, loading }) {

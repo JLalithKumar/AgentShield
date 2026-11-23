@@ -66,7 +66,7 @@ export default function App() {
       const saved = { ...data, candidate_version: data.candidate_version || candidate, recorded_at: new Date().toISOString() };
       setHistoryRuns(previous => [saved, ...previous].slice(0, 20));
     } catch (err) {
-      setError(`Evaluation could not be completed. ${err.message} Check the evaluation service and try again.`);
+      setError(`Unable to connect to the evaluation service. ${err.message} Check that the FastAPI backend is running on port 8000, then retry.`);
     } finally {
       setLoading(false);
     }
