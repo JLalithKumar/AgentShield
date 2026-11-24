@@ -22,4 +22,11 @@ class Settings:
     DEFAULT_TIMEOUT_SECONDS: int = 5
     ENABLE_LIVE_LLM: bool = os.getenv("ENABLE_LIVE_LLM", "false").lower() == "true"
 
+    # Authentication & Session Security
+    SESSION_COOKIE_NAME: str = "agentshield_session"
+    CSRF_COOKIE_NAME: str = "agentshield_csrf"
+    SESSION_MAX_AGE_SECONDS: int = 60 * 60 * 24 * 7  # 7 days
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
+
 settings = Settings()

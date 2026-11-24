@@ -107,11 +107,11 @@ describe('AgentShield evaluation console', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/evaluations$/),
-      {
+      expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ baseline_version: 'v1.0', candidate_version: 'v1.1' }),
-      },
+      }),
     );
     expect(screen.getByText('BLOCKED')).toBeInTheDocument();
     expect(screen.getByText(/Policy: PAYMENT_STATUS_MISMATCH/)).toBeInTheDocument();

@@ -1,13 +1,38 @@
+from fastapi.testclient import TestClient
+from backend.app.main import app
+
+def get_authenticated_cookies(client, email="qa@agentshield.org"):
+    """Helper to register and login a test user, returning session cookies."""
+    client.post("/api/auth/register", json={
+        "full_name": "QA Specialist",
+        "email": email,
+        "password": "SecurePassword123!"
+    })
+    login_resp = client.post("/api/auth/login", json={
+        "email": email,
+        "password": "SecurePassword123!"
+    })
+    return login_resp.cookies
+
 def test_post_evaluation_endpoint(client):
     """
     Requirement 11, 15, 18: POST /api/evaluations
     Matches docs/api-contract.md and frontend App.jsx contract.
+    Enforces mandatory authentication: 401 when anonymous, 200 when authenticated.
     """
     payload = {
         "baseline_version": "v1.0",
         "candidate_version": "v1.1"
     }
-    response = client.post("/api/evaluations", json=payload)
+
+    # 1. Anonymous request must be rejected with 401 Unauthorized
+    anon_resp = client.post("/api/evaluations", json=payload)
+    assert anon_resp.status_code == 401
+    assert "authentication required" in anon_resp.json()["detail"].lower()
+
+    # 2. Authenticated request proceeds
+    cookies = get_authenticated_cookies(client, "alice.eval@agentshield.org")
+    response = client.post("/api/evaluations", json=payload, cookies=cookies)
     assert response.status_code == 200
     data = response.json()
 
@@ -23,6 +48,11 @@ def test_post_evaluation_endpoint(client):
     run_id = data["run_id"]
 
     # Requirement 16: GET /api/evaluations/{run_id}
+    # Anonymous must fail with 401
+    with TestClient(app) as unauth_client:
+        assert unauth_client.get(f"/api/evaluations/{run_id}").status_code == 401
+        assert unauth_client.get(f"/api/evaluations/{run_id}/traces").status_code == 401
+
     get_resp = client.get(f"/api/evaluations/{run_id}")
     assert get_resp.status_code == 200
     run_data = get_resp.json()
@@ -43,12 +73,17 @@ def test_post_evaluation_endpoint(client):
     assert t002_trace["is_new_regression"] is True
 
 def test_candidate_v1_2_api_release_allowed(client):
-    """Candidate v1.2 returns ALLOW over HTTP API."""
+    """Candidate v1.2 returns ALLOW over HTTP API when authenticated."""
     payload = {
         "baseline_version": "v1.0",
         "candidate_version": "v1.2"
     }
-    response = client.post("/api/evaluations", json=payload)
+
+    # Anonymous must fail with 401
+    assert client.post("/api/evaluations", json=payload).status_code == 401
+
+    cookies = get_authenticated_cookies(client, "bob.eval@agentshield.org")
+    response = client.post("/api/evaluations", json=payload, cookies=cookies)
     assert response.status_code == 200
     data = response.json()
     assert data["passed"] == 24

@@ -47,6 +47,7 @@ def run_evaluation(
     baseline: str = "v1.0",
     candidate: str = "v1.1",
     db: Optional[Session] = None,
+    user_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Main AgentShield evaluation pipeline.
@@ -459,6 +460,7 @@ def run_evaluation(
 
         db_run = EvaluationRun(
             run_id=run_id,
+            user_id=user_id,
             baseline_version=baseline,
             candidate_version=candidate,
             total_tests=total_tests,

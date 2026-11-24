@@ -1,13 +1,40 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.app.database.session import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(100), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sessions = relationship("AuthSession", back_populates="user", cascade="all, delete-orphan")
+    evaluation_runs = relationship("EvaluationRun", back_populates="user")
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    session_token_hash = Column(String(64), unique=True, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="sessions")
 
 class EvaluationRun(Base):
     __tablename__ = "evaluation_runs"
 
     id = Column(Integer, primary_key=True, index=True)
     run_id = Column(String(50), unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     baseline_version = Column(String(20), nullable=False)
     candidate_version = Column(String(20), nullable=False)
     total_tests = Column(Integer, nullable=False, default=0)
@@ -16,6 +43,7 @@ class EvaluationRun(Base):
     release_decision = Column(String(20), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    user = relationship("User", back_populates="evaluation_runs")
     results = relationship("ScenarioResult", back_populates="run", cascade="all, delete-orphan")
 
 class ScenarioResult(Base):
