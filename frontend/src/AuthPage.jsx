@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import Icon from './Icon';
-import TurnstileWidget from './TurnstileWidget';
 import './auth-page.css';
 
 export default function AuthPage({
@@ -18,10 +17,8 @@ export default function AuthPage({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
   const [localError, setLocalError] = useState('');
 
-  const turnstileRef = useRef(null);
   const nameInputRef = useRef(null);
   const emailInputRef = useRef(null);
 
@@ -43,8 +40,6 @@ export default function AuthPage({
   function switchMode(newMode) {
     setMode(newMode);
     setLocalError('');
-    setTurnstileToken('');
-    turnstileRef.current?.reset();
     if (onClearError) onClearError();
   }
 
@@ -80,30 +75,10 @@ export default function AuthPage({
       }
     }
 
-    const effectiveToken = turnstileToken || (import.meta.env.MODE === 'test' ? '1x00000000000000000000AA' : '');
-
-    // Enforce Turnstile verification in client (real verification is on FastAPI backend)
-    if (!effectiveToken) {
-      setLocalError('Please complete the security challenge verification before continuing.');
-      return;
-    }
-
     if (mode === 'register') {
-      try {
-        await onRegister(fullName.trim(), cleanEmail, password, effectiveToken);
-      } catch {
-        // Reset challenge on failure
-        setTurnstileToken('');
-        turnstileRef.current?.reset();
-      }
+      await onRegister(fullName.trim(), cleanEmail, password);
     } else {
-      try {
-        await onLogin(cleanEmail, password, effectiveToken);
-      } catch {
-        // Reset challenge on failure
-        setTurnstileToken('');
-        turnstileRef.current?.reset();
-      }
+      await onLogin(cleanEmail, password);
     }
   }
 
@@ -339,27 +314,6 @@ export default function AuthPage({
               </div>
             )}
 
-            {/* Cloudflare Turnstile CAPTCHA Widget */}
-            <div className="auth-field-group">
-              <label id="turnstile-label">Security Verification</label>
-              <TurnstileWidget
-                ref={turnstileRef}
-                action={mode}
-                onVerify={token => {
-                  setTurnstileToken(token);
-                  setLocalError('');
-                }}
-                onExpire={() => {
-                  setTurnstileToken('');
-                  setLocalError('Security verification expired. Please verify again.');
-                }}
-                onError={err => {
-                  setTurnstileToken('');
-                  setLocalError(`Security challenge error: ${err}`);
-                }}
-              />
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
@@ -409,7 +363,7 @@ export default function AuthPage({
           <div className="auth-security-notice">
             <p>
               <Icon name="shield" size={14} />
-              <span>Protected by Cloudflare Turnstile bot verification & Argon2id encryption.</span>
+              <span>Protected by Argon2id password encryption & secure sessions.</span>
             </p>
           </div>
         </div>

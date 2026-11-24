@@ -13,6 +13,14 @@ from backend.app.runner.test_runner import run_evaluation
 from backend.app.database.session import get_db
 from backend.app.database.models import EvaluationRun, ScenarioResult, EvidenceTrace, User
 from backend.app.api.deps import get_current_user, verify_csrf_token
+from backend.app.core.rate_limit import rate_limiter
+from backend.app.core.config import settings
+
+eval_limiter = rate_limiter(
+    action="evaluations",
+    max_requests=settings.RATE_LIMIT_EVALUATIONS_MAX,
+    window_seconds=settings.RATE_LIMIT_EVALUATIONS_WINDOW_SECONDS
+)
 
 router = APIRouter(prefix="/evaluations", tags=["Evaluations"])
 
@@ -22,6 +30,7 @@ def trigger_evaluation(
     response: Response,
     current_user: User = Depends(get_current_user),
     _csrf: None = Depends(verify_csrf_token),
+    _rate_limit: None = Depends(eval_limiter),
     db: Session = Depends(get_db)
 ):
     """

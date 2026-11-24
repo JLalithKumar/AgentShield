@@ -1,7 +1,7 @@
 """
 AgentShield — Neon Serverless PostgreSQL Initialization Script
 Usage:
-    python deploy/vercel-neon/init_neon_db.py [DATABASE_URL]
+    python scripts/init_neon_db.py [DATABASE_URL]
 
 Features:
 - Idempotent schema initialization for Neon PostgreSQL.
@@ -12,6 +12,7 @@ Features:
     3. evaluation_runs
     4. scenario_results
     5. evidence_traces
+    6. rate_limit_records
 - Verifies database connectivity, table count, and schema integrity.
 - Safe to re-run multiple times without data loss.
 """
@@ -21,7 +22,7 @@ import time
 from pathlib import Path
 
 # Add project root to path
-repo_root = Path(__file__).resolve().parent.parent.parent
+repo_root = Path(__file__).resolve().parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
@@ -35,7 +36,7 @@ def init_neon_database(database_url: str = None) -> bool:
     if not target_url:
         print("[ERROR] No DATABASE_URL provided.")
         print("Please provide a Neon connection string as an argument or set DATABASE_URL.")
-        print("Example: python deploy/vercel-neon/init_neon_db.py \"postgresql://user:pass@ep-cool-fog-123456.us-east-2.aws.neon.tech/neondb?sslmode=require\"")
+        print("Example: python scripts/init_neon_db.py \"postgresql://user:pass@ep-cool-fog-123456.us-east-2.aws.neon.tech/neondb?sslmode=require\"")
         return False
 
     target_url = target_url.strip()
@@ -88,7 +89,7 @@ def init_neon_database(database_url: str = None) -> bool:
     # Perform table inspection
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
-    expected_tables = ["users", "auth_sessions", "evaluation_runs", "scenario_results", "evidence_traces"]
+    expected_tables = ["users", "auth_sessions", "evaluation_runs", "scenario_results", "evidence_traces", "rate_limit_records"]
     
     print("\nDatabase Schema Verification:")
     all_ok = True

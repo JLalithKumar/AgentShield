@@ -17,7 +17,7 @@ import './trace-enhancements.css';
 /**
  * Resolves initial route based on initialView prop or current window.location.pathname.
  * Supported routes:
- * - '/' and '/auth': Dedicated Login / Sign Up with Cloudflare Turnstile CAPTCHA
+ * - '/' and '/auth': Dedicated Login / Sign Up with secure Argon2id authentication
  * - '/home': Authenticated AgentShield Homepage
  * - '/app': Protected Evaluation Engine Workspace (evaluations, library, trace, history)
  */
@@ -354,11 +354,10 @@ export default function App({ initialView, initialUser }) {
     }
   }
 
-  async function handleLogin(email, password, turnstileToken) {
+  async function handleLogin(email, password) {
     setAuthLoading(true);
     setAuthError('');
     try {
-      const token = turnstileToken || (import.meta.env.MODE === 'test' ? '1x00000000000000000000AA' : undefined);
       const resp = await fetch(API_ENDPOINTS.authLogin, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -366,7 +365,6 @@ export default function App({ initialView, initialUser }) {
         body: JSON.stringify({
           email,
           password,
-          turnstile_token: token,
         }),
       });
       if (!resp.ok) {
@@ -401,11 +399,10 @@ export default function App({ initialView, initialUser }) {
     }
   }
 
-  async function handleRegister(fullName, email, password, turnstileToken) {
+  async function handleRegister(fullName, email, password) {
     setAuthLoading(true);
     setAuthError('');
     try {
-      const token = turnstileToken || (import.meta.env.MODE === 'test' ? '1x00000000000000000000AA' : undefined);
       const resp = await fetch(API_ENDPOINTS.authRegister, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -414,7 +411,6 @@ export default function App({ initialView, initialUser }) {
           full_name: fullName,
           email,
           password,
-          turnstile_token: token,
         }),
       });
       if (!resp.ok) {
