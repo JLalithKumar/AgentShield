@@ -1,6 +1,6 @@
 """
 AgentShield Backend Service Entrypoint
-Provides entrypoint for Vercel Services (entrypoint: "main:app").
+Provides entrypoint for Render and ASGI servers (entrypoint: "backend.main:app" or "backend.app.main:app").
 """
 import sys
 import types

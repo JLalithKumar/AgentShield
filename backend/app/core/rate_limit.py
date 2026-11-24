@@ -10,7 +10,7 @@ from backend.app.database.models import RateLimitRecord
 
 def get_client_ip(request: Request) -> str:
     """
-    Extract the real client IP address, handling Vercel and reverse proxy headers.
+    Extract the real client IP address, handling Render and reverse proxy headers.
     """
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:

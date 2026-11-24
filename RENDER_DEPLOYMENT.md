@@ -1,14 +1,14 @@
-# AgentShield — Production Vercel + Neon Deployment Guide
+# AgentShield — Production Render + Neon Deployment Guide
 **Team Code Battalions | Visionet Techthon 2026**  
-**Repository Branch:** `fix/remove-turnstile-vercel` (Target: `main`)
+**Repository Branch:** `deploy/render-only` (Target: `main`)
 
 ---
 
 ## 1. Executive Summary & Architecture Overview
 
-AgentShield is an enterprise-grade AI safety and automated change-control platform designed for autonomous banking agents. It enforces a strict **Five-Stage Evaluation Workflow** (Behavioral Scenarios, Invariant Assertion Engine, Safety Policy Evaluator, Risk Categorization, and Release Gate Decision) that intercepts regressions before agents deploy to production.
+AgentShield is an enterprise-grade AI safety and automated change-control platform designed for autonomous banking agents. It enforces a strict **Five-Stage Evaluation Workflow** (Behavioral Scenarios, Invariant Assertion Engine, Safety Policy Evaluator, Risk Categorization, and Release Gate Decision) that intercepts behavioral regressions before agents deploy to production.
 
-To ensure **Visionet Techthon mentors** can evaluate AgentShield on a stable, publicly accessible HTTPS URL 24/7—without requiring the developer's laptop to remain online—the platform is engineered for a zero-cost serverless deployment combining **Vercel Hobby** and **Neon Serverless PostgreSQL**.
+To ensure **Visionet Techthon mentors** can evaluate AgentShield on a stable, publicly accessible HTTPS URL 24/7—without requiring the developer's laptop to remain online—the platform is engineered for zero-cost cloud deployment combining **Render** and **Neon Serverless PostgreSQL**.
 
 Authentication is secured using **Argon2id password hashing**, **cryptographically secure HttpOnly session cookies**, **Double-Submit CSRF token enforcement**, and **persistent database-backed rate limiting** for brute-force and abuse protection—without reliance on third-party CAPTCHA widgets.
 
@@ -20,25 +20,28 @@ Authentication is secured using **Argon2id password hashing**, **cryptographical
 |  - Accessible, frictionless Login / Sign Up with inline validation                    |
 +-------------------------------------------+-------------------------------------------+
                                             |
-                   HTTPS (Single Unified Origin: https://<your-project>.vercel.app)
+                   HTTPS (e.g. https://agentshield-frontend.onrender.com)
                                             |
                                             v
 +-------------------------------------------+-------------------------------------------+
-|                               VERCEL EDGE NETWORK                                     |
-|  - Static Assets (/assets/*)  --> Cached with immutable headers                       |
-|  - Client Routing (/*)        --> Serves Vite index.html (SPA client-side router)     |
-|  - API Requests (/api/*)      --> Routed to FastAPI Serverless Backend Service        |
+|                          RENDER STATIC SITE (FRONTEND)                                |
+|  - Static Assets (/assets/*)  --> Served with immutable caching                       |
+|  - Client Routing (/*)        --> Rewrites to /index.html (SPA client-side router)    |
+|  - API Proxying (/api/*)      --> Rewrites & proxies to Render Backend Web Service    |
 +-------------------------------------------+-------------------------------------------+
+                                            |
+                         HTTPS Internal/Public Proxying (/api/*)
                                             |
                                             v
 +-------------------------------------------+-------------------------------------------+
-|                        FASTAPI BACKEND (SERVERLESS ASGI)                              |
-|  - Service: backend/ (monorepo root bridging via backend/main.py)                     |
+|                          RENDER WEB SERVICE (FASTAPI BACKEND)                         |
+|  - Runtime: Python 3.12 (uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT)    |
 |  - Authentication: Argon2id password hashing, HttpOnly session cookies                |
 |  - CSRF Defense: Double-Submit CSRF cookie & header validation                        |
 |  - Abuse Protection: Persistent rate limiting on /login, /register, and /evaluations  |
 |  - 5-Stage Evaluator: 24 Banking Scenarios (Deterministic zero-Ollama serverless mode)|
 |  - Multi-Tenant Isolation: User-scoped queries preventing IDOR leaks                  |
+|  - Single-Origin Fallback: Built-in SPA static file serving capability                |
 +-------------------------------------------+-------------------------------------------+
                                             |
                      TLS/SSL Encrypted (sslmode=require) via PgBouncer Pooler
@@ -54,10 +57,10 @@ Authentication is secured using **Argon2id password hashing**, **cryptographical
 ```
 
 ### Component Roles & Guarantees
-1. **Frontend (React 19 + Vite):** Served via Vercel Edge CDN with instantaneous page loads (<1s). Supports deep client routing across `/`, `/auth`, `/home`, and `/app` (`evaluations`, `library`, `trace`, `history`).
-2. **Backend (FastAPI ASGI on Vercel):** Serverless Python runtime handling session authentication, database-backed rate limiting, and the five-stage evaluation gate runner.
-3. **Database (Neon Serverless PostgreSQL):** Managed, multi-AZ PostgreSQL with auto-scaling storage and built-in PgBouncer connection pooling. Retains all registered user accounts, evaluation histories, and rate limit counters persistently.
-4. **Brute-Force & Abuse Protection:** Database-backed sliding-window rate limiting on `/api/auth/login`, `/api/auth/register`, and `/api/evaluations` ensures consistent protection across serverless instances without requiring client-side CAPTCHA challenges.
+1. **Frontend (React 19 + Vite):** Deployed as a Render Static Site with instantaneous global CDN delivery. Supports client-side routing across `/`, `/auth`, `/home`, and `/app` (`evaluations`, `library`, `trace`, `history`).
+2. **Backend (FastAPI on Render):** Deployed as a Render Python Web Service binding to dynamic `$PORT`. Serves session authentication, rate limiting, and the 5-stage evaluation gate runner.
+3. **Database (Neon Serverless PostgreSQL):** Managed PostgreSQL with auto-scaling storage and built-in PgBouncer connection pooling. Persistently stores all registered user accounts, evaluation histories, and rate limit counters.
+4. **Brute-Force & Abuse Protection:** Database-backed sliding-window rate limiting on `/api/auth/login`, `/api/auth/register`, and `/api/evaluations` ensures consistent protection across serverless and free-tier instances without third-party challenge services.
 5. **Deterministic Evaluation Engine:** Runs all 24 banking scenarios in ~1.5 seconds without requiring an external GPU or Ollama daemon:
    - **Candidate v1.1:** Evaluates to **23/24 PASS**, 1 Critical Regression (Scenario `T002` - `PAYMENT_STATUS_MISMATCH`), Release Gate Decision: **BLOCKED**.
    - **Candidate v1.2:** Evaluates to **24/24 PASS**, 0 Critical Regressions, Release Gate Decision: **ALLOWED**.
@@ -68,100 +71,126 @@ Authentication is secured using **Argon2id password hashing**, **cryptographical
 
 All target infrastructure runs on free, non-commercial tiers suitable for student competitions:
 - **GitHub:** Free repository hosting.
-- **Vercel Hobby:** Free deployment tier (100 GB bandwidth/month, serverless function invocation limits generous for evaluation demos).
+- **Render Free Tier:** Free Web Service (512 MB RAM, shared CPU) + Free Static Site hosting (unlimited bandwidth).
 - **Neon Free Tier:** 0.5 GiB storage, free compute endpoints with PgBouncer connection pooling.
 
 ---
 
 ## 3. Step-by-Step Provisioning Guide
 
-### Phase 1 — Neon Serverless PostgreSQL Setup
+### Option A: Render Blueprint (Recommended — 1-Click Setup)
 
-1. **Sign Up / Log In to Neon:**
-   - Navigate to [https://neon.tech](https://neon.tech) and authenticate (e.g. via GitHub).
-2. **Create a New Project:**
-   - **Name:** `agentshield-db`
-   - **Postgres Version:** `16` (Default)
-   - **Region:** Select the region closest to your Vercel deployment (e.g., `US East (N. Virginia)` / `aws-us-east-1` or `aws-us-east-2`).
-3. **Enable Connection Pooling & Copy Connection String:**
-   - In the Neon Dashboard, go to **Connection Details**.
-   - Select the checkbox **Pooled connection** (ensure the hostname contains `-pooler`, e.g., `ep-patient-water-123456-pooler.us-east-2.aws.neon.tech`).
-   - Copy the connection string. It will look like:
-     ```text
-     postgresql://neondb_owner:npg_xYzA1234@ep-patient-water-123456-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
-     ```
-4. **Initialize Schema & Tables with `init_neon_db.py`:**
-   - From your local terminal (with project virtualenv active), run:
-     ```bash
-     python deploy/vercel-neon/init_neon_db.py "postgresql://neondb_owner:npg_xYzA1234@ep-patient-water-123456-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
-     ```
-   - **Verification Output:**
-     The script validates SSL connectivity, creates all 6 tables idempotently, and verifies column counts:
-     ```text
-     =======================================================
-     AgentShield — Neon PostgreSQL Schema Provisioning
-     =======================================================
-     [SUCCESS] Connected in 182.4ms
-     PostgreSQL Version: PostgreSQL 16.6 on x86_64-pc-linux-gnu...
-     Applying idempotent schema migrations (create_all)...
-     Database Schema Verification:
-       ✓ users                (7 columns: id, full_name, email, password_hash...)
-       ✓ auth_sessions        (6 columns: id, user_id, session_token_hash, created_at...)
-       ✓ evaluation_runs      (10 columns: id, run_id, user_id, baseline_version...)
-       ✓ scenario_results     (13 columns: id, run_id, scenario_id, scenario_name...)
-       ✓ evidence_traces      (8 columns: id, scenario_result_id, scenario_id, banking_request...)
-       ✓ rate_limit_records   (3 columns: id, key, created_at)
-     [SUCCESS] Neon PostgreSQL database is completely initialized and ready for production!
-     ```
+The repository includes a root `render.yaml` Blueprint file that configures both the backend and frontend automatically.
+
+1. **Push Branch to GitHub:**
+   Ensure branch `deploy/render-only` is pushed to your GitHub repository.
+2. **In Render Dashboard:**
+   - Go to [https://dashboard.render.com/blueprints](https://dashboard.render.com/blueprints)
+   - Click **New Blueprint Instance**.
+   - Connect your GitHub repository `AgentShield-Techthon-2026` and select branch `deploy/render-only`.
+3. **Set Parameters:**
+   - Render will parse `render.yaml` and create both `agentshield-backend` and `agentshield-frontend`.
+   - Enter your `DATABASE_URL` (from Neon).
+4. **Deploy:**
+   - Click **Apply**. Render builds and deploys both services automatically!
 
 ---
 
-### Phase 2 — Vercel Project Deployment
+### Option B: Manual Setup via Render Dashboard
 
-1. **Push Branch to GitHub:**
-   - Commit changes to `fix/remove-turnstile-vercel` and push to your remote GitHub repository.
-2. **Import Repository in Vercel:**
-   - In [Vercel Dashboard](https://vercel.com/dashboard), click **Add New...** -> **Project**.
-   - Select your GitHub repository `AgentShield-Techthon-2026`.
-3. **Configure Project Settings:**
-   - **Application Preset:** `Services` (detected automatically from `vercel.json`).
-   - **Root Directory:** `./`
-4. **Configure Environment Variables:**
-   Add required production environment variables (see Section 4).
-5. **Deploy:**
-   - Click **Deploy**. Vercel will build both the frontend and backend services and route `/api/*` to FastAPI while serving the React SPA under the same HTTPS origin.
+If configuring services manually in the Render dashboard:
+
+#### Phase 1 — Neon Serverless PostgreSQL Setup
+1. **Sign Up / Log In to Neon:** Navigate to [https://neon.tech](https://neon.tech).
+2. **Create a Project:** Name it `agentshield-db`, Postgres 16.
+3. **Copy Pooled Connection String:** Under **Connection Details**, ensure **Pooled connection** is checked (contains `-pooler` in host).
+   ```text
+   postgresql://neondb_owner:npg_xYzA1234@ep-patient-water-123456-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+4. **Provision Tables with `scripts/init_neon_db.py`:**
+   Run from your local terminal with virtualenv active:
+   ```bash
+   python scripts/init_neon_db.py "YOUR_NEON_POOLED_CONNECTION_STRING"
+   ```
+   *Output validates that `users`, `auth_sessions`, `evaluation_runs`, `scenario_results`, `evidence_traces`, and `rate_limit_records` are created.*
+
+#### Phase 2 — Render Backend Web Service Setup
+1. In Render Dashboard, click **New +** $\rightarrow$ **Web Service**.
+2. Connect your GitHub repository `AgentShield-Techthon-2026` (branch: `deploy/render-only`).
+3. Configure settings:
+   - **Name:** `agentshield-backend`
+   - **Language:** `Python`
+   - **Region:** `Ohio (US East)` (recommended to match Neon region)
+   - **Branch:** `deploy/render-only`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+   - **Health Check Path:** `/health`
+4. Set Environment Variables (see Section 4 for values).
+5. Click **Deploy Web Service**. Note your backend URL (e.g., `https://agentshield-backend.onrender.com`).
+
+#### Phase 3 — Render Frontend Static Site Setup
+1. In Render Dashboard, click **New +** $\rightarrow$ **Static Site**.
+2. Connect your GitHub repository `AgentShield-Techthon-2026` (branch: `deploy/render-only`).
+3. Configure settings:
+   - **Name:** `agentshield-frontend`
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm ci && npm run build`
+   - **Publish Directory:** `dist`
+4. **Configure Redirects / Rewrites:**
+   Under **Redirects/Rewrites**, add two rules (in exact order):
+   - **Rule 1 (API Proxy):**
+     - Type: `Rewrite`
+     - Source: `/api/*`
+     - Destination: `https://agentshield-backend.onrender.com/api/*` (use your actual backend URL)
+   - **Rule 2 (SPA Fallback):**
+     - Type: `Rewrite`
+     - Source: `/*`
+     - Destination: `/index.html`
+5. Click **Deploy Static Site**.
 
 ---
 
 ## 4. Complete Environment Variables Matrix
 
-Enter these variables in **Vercel Project Settings -> Environment Variables**:
+Enter these variables in **Render Backend Service -> Environment Variables**:
 
-| Variable Name | Scope | Sensitive? | Production Value / Pattern | Description & Purpose |
-|---|---|---|---|---|
-| `DATABASE_URL` | Backend / All | **YES** | `postgresql://user:pass@ep-pooler.neon.tech/neondb?sslmode=require` | Pooled connection string to Neon PostgreSQL. |
-| `AGENTSHIELD_LIVE_LLM` | Backend / All | No | `false` | Disables live external Ollama daemon; enforces fast, reproducible deterministic 5-stage evaluation. |
-| `ENABLE_LIVE_LLM` | Backend / All | No | `false` | Alias flag ensuring zero LLM network dependencies. |
-| `COOKIE_SECURE` | Backend / All | No | `true` | Enforces `Secure` flag on session cookies over HTTPS (auto-enabled when `VERCEL=1`). |
-| `COOKIE_SAMESITE` | Backend / All | No | `lax` | Enforces SameSite=Lax cookie attribute preventing CSRF in cross-site navigations. |
-| `VITE_API_BASE_URL` | Frontend / Build | No | `/api` | Relative proxy URL ensuring all frontend API calls route through the same origin. |
-| `RATE_LIMIT_LOGIN_MAX` | Backend / All | No | `10` | Maximum login requests per minute per client IP. |
-| `RATE_LIMIT_REGISTER_MAX` | Backend / All | No | `5` | Maximum registration requests per minute per client IP. |
-| `RATE_LIMIT_EVALUATIONS_MAX` | Backend / All | No | `30` | Maximum evaluation requests per minute per client IP. |
-| `DB_POOL_SIZE` | Backend / All | No | `5` | SQLAlchemy client pool size tuned for serverless connection conservation. |
-| `DB_MAX_OVERFLOW` | Backend / All | No | `10` | Maximum temporary overflow connections for burst traffic. |
-| `DB_POOL_RECYCLE` | Backend / All | No | `300` | Recycles idle connections every 5 minutes to prevent stale PgBouncer socket errors. |
+| Variable Name | Sensitive? | Production Value | Description & Purpose |
+|---|---|---|---|
+| `DATABASE_URL` | **YES** | `postgresql://user:pass@ep-pooler.neon.tech/neondb?sslmode=require` | Pooled connection string to Neon PostgreSQL. |
+| `PYTHON_VERSION` | No | `3.12.8` | Enforces verified Python runtime version on Render. |
+| `AGENTSHIELD_LIVE_LLM` | No | `false` | Enforces fast, reproducible deterministic 5-stage evaluation without live Ollama daemon. |
+| `ENABLE_LIVE_LLM` | No | `false` | Alias flag ensuring zero external LLM dependencies. |
+| `COOKIE_SECURE` | No | `true` | Enforces `Secure` flag on cookies over HTTPS (auto-enabled on Render). |
+| `COOKIE_SAMESITE` | No | `lax` | Enforces `SameSite=Lax` cookie attribute for CSRF safety. |
+| `RATE_LIMIT_LOGIN_MAX` | No | `10` | Maximum login attempts per 60 seconds per IP. |
+| `RATE_LIMIT_REGISTER_MAX` | No | `5` | Maximum registration attempts per 60 seconds per IP. |
+| `RATE_LIMIT_EVALUATIONS_MAX` | No | `30` | Maximum evaluation triggers per 60 seconds per IP. |
+| `CORS_ORIGINS` | No | `https://agentshield-frontend.onrender.com` | Optional explicit CORS whitelist for your frontend domain. |
+| `DB_POOL_SIZE` | No | `5` | SQLAlchemy pool size tuned for serverless connection conservation. |
+| `DB_MAX_OVERFLOW` | No | `10` | Maximum temporary overflow connections for burst requests. |
+| `DB_POOL_RECYCLE` | No | `300` | Recycles idle connections every 5 minutes to prevent stale socket errors. |
 
 ---
 
-## 5. Mentor Acceptance Test Protocol (Verification Runbook)
+## 5. Single-Origin Web Service Fallback (Zero-Proxy Alternative)
 
-Mentors and evaluators can follow this step-by-step test plan to verify that AgentShield meets all security, functional, and architectural requirements:
+If an evaluator prefers deploying the entire application under **one single URL** (without a separate static site or rewrite proxies), AgentShield includes built-in static file serving directly in FastAPI:
+
+1. In Render, deploy a single **Web Service**:
+   - **Build Command:** `npm --prefix frontend ci && npm --prefix frontend run build && pip install -r requirements.txt`
+   - **Start Command:** `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+2. `backend/app/main.py` detects `frontend/dist` and automatically mounts `/assets` and handles SPA client routing for `/`, `/auth`, `/home`, `/app/*` under the same unified origin.
+
+---
+
+## 6. Mentor Acceptance Test Protocol (Verification Runbook)
+
+Mentors and evaluators can verify the deployment step-by-step:
 
 ```
 +---------------------------------------------------------------------------------------+
 | STEP 1: USER REGISTRATION & AUTHENTICATION                                            |
-| Action: Open https://<your-project>.vercel.app in a browser.                          |
+| Action: Open https://<your-project>.onrender.com in a browser.                         |
 | Expected Result:                                                                      |
 |  - Page displays Sign In / Create Account form directly (clean, no CAPTCHA widget).   |
 |  - Enter Full Name, Email ("mentor@visionet.com"), and a password (>= 8 chars).       |
@@ -187,6 +216,7 @@ Mentors and evaluators can follow this step-by-step test plan to verify that Age
 |  - Cookie 'agentshield_session' is set with HttpOnly=True, Secure=True, SameSite=Lax. |
 |  - Cookie 'agentshield_csrf' is present and sent via 'X-CSRF-Token' header.           |
 |  - Direct unauthenticated access to /api/evaluations receives 401 Unauthorized.       |
+|  - Sensitive endpoints return Cache-Control: no-store, private.                       |
 +---------------------------------------------------------------------------------------+
                                             |
                                             v
@@ -259,35 +289,32 @@ Mentors and evaluators can follow this step-by-step test plan to verify that Age
 
 ---
 
-## 6. Serverless Caveats & Free-Tier Mitigations
+## 7. Render Free-Tier Limitations & Mitigations
 
-1. **Neon Auto-Suspend (Cold Starts):**
-   - *Behavior:* In Neon's free tier, compute endpoints auto-suspend after 5 minutes of inactivity to save compute quotas.
-   - *Mitigation:* When a new request arrives, Neon resumes automatically in ~1–2 seconds. In `backend/app/database/session.py`, SQLAlchemy is configured with `pool_pre_ping=True` and connection retries, ensuring transient sleep states do not cause unhandled 500 exceptions.
-2. **Vercel Serverless Function Cold Starts:**
-   - *Behavior:* If no requests hit FastAPI for >15 minutes, Vercel spins down the container instance.
-   - *Mitigation:* The Python ASGI entrypoint initializes quickly on first boot. Subsequent requests complete in <50ms.
-3. **Database Connection Pooling with PgBouncer:**
-   - *Behavior:* Serverless function concurrency can quickly exhaust traditional PostgreSQL connection limits.
-   - *Mitigation:* Neon provides built-in PgBouncer pooling via the `-pooler` connection string. We configure `DB_POOL_SIZE=5`, `DB_MAX_OVERFLOW=10`, and `DB_POOL_RECYCLE=300` to prevent socket starvation.
-4. **Zero GPU Compute Cost:**
-   - *Behavior:* Running a live 7B-parameter Ollama model on free serverless infrastructure is impossible due to memory and time limits.
-   - *Mitigation:* The platform uses deterministic behavioral fixtures (`AGENTSHIELD_LIVE_LLM=false`) reproducing exact multi-agent banking transactions and API responses with 100% fidelity.
+1. **Free Tier Instance Spindown (Cold Starts):**
+   - *Behavior:* Render spins down free Web Services after 15 minutes of inactivity.
+   - *Mitigation:* The first incoming request wakes the instance in ~30–50 seconds. Once awake, subsequent API calls respond in <100ms. Render Static Sites never spin down and always respond instantly.
+2. **Neon Auto-Suspend:**
+   - *Behavior:* Free Neon compute endpoints auto-suspend after 5 minutes of inactivity.
+   - *Mitigation:* SQLAlchemy is configured with `pool_pre_ping=True` in `backend/app/database/session.py`. When Neon wakes up (~1.5s), the pool reconnects cleanly without dropping requests.
+3. **512 MB Memory Limit:**
+   - *Mitigation:* In deterministic evaluation mode (`AGENTSHIELD_LIVE_LLM=false`), memory usage stays below ~90 MB, well within Render's 512 MB free quota.
 
 ---
 
-## 7. Rollback & Troubleshooting Runbook
+## 8. Rollback & Troubleshooting Runbook
 
 ### Rollback Strategy
-1. **Instant Vercel Rollback:**
-   - In the Vercel Dashboard, go to **Deployments**.
-   - Find the previous passing deployment and click **... -> Promote to Production**. Rollback takes effect immediately across all edge nodes.
+1. **Instant Render Rollback:**
+   - In Render Dashboard, go to your Web Service or Static Site $\rightarrow$ **Events**.
+   - Locate the previous successful deploy and click **Rollback to this deploy**.
 
 ### Common Issues & Quick Remedies
 
 | Issue / Error | Likely Root Cause | Exact Remedy |
 |---|---|---|
-| `500 Internal Server Error` on `/api/auth/register` | Database table missing or connection failed. | Run `python deploy/vercel-neon/init_neon_db.py "<DATABASE_URL>"` and verify all tables are listed. |
-| `429 Too Many Requests` | Rate limit threshold exceeded during rapid automated testing. | Wait 60 seconds for the sliding window to expire, or tune `RATE_LIMIT_*` variables. |
-| `CORS Error in Browser Console` | Request made to third-party domain instead of same-origin `/api`. | Verify `VITE_API_BASE_URL` is set to `/api`. Vercel automatically routes `/api/*` to FastAPI without CORS headers needed. |
-| `401 Unauthorized` on `/api/evaluations` | User is not logged in or cookie expired. | Complete login via `/auth` first to establish a valid `agentshield_session` cookie. |
+| `500 Internal Server Error` on `/api/auth/register` | Database tables missing or connection string misconfigured. | Run `python scripts/init_neon_db.py "<DATABASE_URL>"` and verify all 6 tables exist in Neon. |
+| `429 Too Many Requests` | Rate limit threshold exceeded during rapid automated testing. | Wait 60 seconds for the sliding window to reset, or adjust `RATE_LIMIT_*` variables. |
+| `CORS Error in Browser Console` | Request made to backend without matching origin. | Ensure the Static Site rewrite rule `/api/*` $\rightarrow$ `https://<backend>.onrender.com/api/*` is active, or set `CORS_ORIGINS` to your frontend domain. |
+| `401 Unauthorized` on `/api/evaluations` | User is not logged in or session cookie expired. | Sign in through `/auth` to generate a valid `agentshield_session` cookie. |
+| Free tier backend slow on first visit | Render free service waking from cold sleep. | Wait 45 seconds on first access for the container to initialize. |

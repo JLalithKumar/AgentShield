@@ -52,6 +52,7 @@ def register_user(
     Register a new user account with Argon2id password hashing and establish a secure session.
     Protected by database-backed rate limiting.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     normalized_email = req.email.strip().lower()
 
     # Check for existing user
@@ -123,6 +124,7 @@ def login_user(
     Authenticate user credentials, issue an opaque session token, and set HttpOnly cookies.
     Protected by database-backed rate limiting.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     normalized_email = req.email.strip().lower()
 
     user = db.query(User).filter(User.email == normalized_email).first()
@@ -175,11 +177,13 @@ def login_user(
 
 @router.get("/me", response_model=AuthStatusResponse)
 def get_auth_status(
+    response: Response,
     current_user: User = Depends(get_current_user_optional)
 ):
     """
     Check current session status and return authenticated user profile.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     if not current_user:
         return {"authenticated": False, "user": None}
     return {"authenticated": True, "user": current_user}
@@ -194,6 +198,7 @@ def logout_user(
     """
     Revoke active session token in the database and clear authentication cookies.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     token = get_session_token_from_request(request)
     if token:
         token_hash = hash_session_token(token)

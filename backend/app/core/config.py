@@ -38,8 +38,8 @@ class Settings:
     SESSION_COOKIE_NAME: str = "agentshield_session"
     CSRF_COOKIE_NAME: str = "agentshield_csrf"
     SESSION_MAX_AGE_SECONDS: int = 60 * 60 * 24 * 7  # 7 days
-    # When deployed to Vercel (HTTPS), default COOKIE_SECURE to True automatically
-    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "true" if os.getenv("VERCEL") else "false").lower() == "true"
+    # When deployed to Render or production HTTPS, default COOKIE_SECURE to True automatically
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "true" if (os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL")) else "false").lower() == "true"
     COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
 
     # Brute-force & Abuse Rate Limiting (Serverless & Persistent)

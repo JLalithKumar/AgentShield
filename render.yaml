@@ -1,0 +1,60 @@
+# Render Blueprint Specification for AgentShield
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  # ============================================================================
+  # 1. FastAPI Backend (Render Web Service)
+  # ============================================================================
+  - type: web
+    name: agentshield-backend
+    runtime: python
+    region: ohio
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        sync: false
+      - key: AGENTSHIELD_LIVE_LLM
+        value: "false"
+      - key: ENABLE_LIVE_LLM
+        value: "false"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: RATE_LIMIT_LOGIN_MAX
+        value: "10"
+      - key: RATE_LIMIT_REGISTER_MAX
+        value: "5"
+      - key: RATE_LIMIT_EVALUATIONS_MAX
+        value: "30"
+      - key: CORS_ORIGINS
+        sync: false
+
+  # ============================================================================
+  # 2. React 19 + Vite Frontend (Render Static Site with API Rewrites)
+  # ============================================================================
+  - type: static
+    name: agentshield-frontend
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      # Prioritize /api/* rewrite before the SPA catch-all fallback
+      - type: rewrite
+        source: /api/*
+        destination: https://agentshield-backend.onrender.com/api/*
+      # SPA Client-Side Routing Fallback
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: /api
