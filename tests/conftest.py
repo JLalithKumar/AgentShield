@@ -1,4 +1,13 @@
+import sys
+from pathlib import Path
+
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
+
+from typing import Optional
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -32,7 +41,7 @@ def db():
 
 @pytest.fixture(scope="function")
 def client(db):
-    """FastAPI TestClient with overridden database dependency."""
+    """FastAPI TestClient with overridden database and mock CAPTCHA dependencies."""
     def override_get_db():
         try:
             yield db
@@ -43,6 +52,7 @@ def client(db):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
 
 @pytest.fixture(autouse=True)
 def reset_simulator():

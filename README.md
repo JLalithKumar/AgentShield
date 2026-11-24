@@ -6,7 +6,7 @@
 
 > **Catch unsafe AI-agent changes before release.** AgentShield replays controlled banking scenarios, checks what an agent claims against what its tools returned, compares candidate behavior with a baseline, and generates an evidence-backed **ALLOW** or **BLOCK** release-readiness decision.
 
-**Project status:** Functional Techthon MVP · **Scenarios:** 24 synthetic banking cases · **Default demo:** Deterministic · **Deployment:** Docker Compose
+**Project status:** Functional Techthon MVP · **Scenarios:** 24 synthetic banking cases · **Default demo:** Deterministic · **Deployment:** Docker Compose & Render
 
 **Repository:** [dharshanworks/AgentShield-Techthon-2026](https://github.com/dharshanworks/AgentShield-Techthon-2026) *(private repository; access required)*
 
@@ -20,6 +20,7 @@
 - [Evaluation workflow](#evaluation-workflow)
 - [Authentication and user data](#authentication-and-user-data)
 - [Technology stack](#technology-stack)
+- [Cloud Deployment (Render + Neon)](#cloud-deployment-render--neon)
 - [Getting started with Docker](#getting-started-with-docker)
 - [Local development](#local-development)
 - [Demo walkthrough](#demo-walkthrough)
@@ -202,6 +203,13 @@ A direct unauthenticated request to `POST /api/evaluations` was verified to retu
 | DevOps | **Docker, Docker Compose, Git, GitHub Actions** | Reproducible builds and collaborative development |
 
 **Architecture note:** The banking agent is the **system under test**. The safety evaluator and regression comparator are **independent application components**, not separate trained AI agents. AWS RDS, ECS/Fargate, SQS, CloudFront, and other cloud services are **future deployment options**, not part of the currently verified local deployment.
+
+## Cloud Deployment (Render + Neon)
+
+AgentShield supports a 24/7 publicly accessible cloud deployment using **Render** (FastAPI Web Service + React Static Site) and **Neon Serverless PostgreSQL**, allowing mentors to evaluate the platform without requiring the developer's machine to stay online.
+
+- **Render Blueprint:** Configured via root [`render.yaml`](render.yaml) for automated multi-service provisioning.
+- **Detailed Instructions:** See the complete [Render Deployment Guide](RENDER_DEPLOYMENT.md) for step-by-step setup, environment variable matrices, rewrite rules, and acceptance verification runbooks.
 
 ## Getting started with Docker
 

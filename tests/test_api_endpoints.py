@@ -6,12 +6,15 @@ def get_authenticated_cookies(client, email="qa@agentshield.org"):
     client.post("/api/auth/register", json={
         "full_name": "QA Specialist",
         "email": email,
-        "password": "SecurePassword123!"
+        "password": "SecurePassword123!",
+        "turnstile_token": "1x00000000000000000000AA"
     })
     login_resp = client.post("/api/auth/login", json={
         "email": email,
-        "password": "SecurePassword123!"
+        "password": "SecurePassword123!",
+        "turnstile_token": "1x00000000000000000000AA"
     })
+    client.cookies.update(login_resp.cookies)
     return login_resp.cookies
 
 def test_post_evaluation_endpoint(client):
@@ -32,7 +35,8 @@ def test_post_evaluation_endpoint(client):
 
     # 2. Authenticated request proceeds
     cookies = get_authenticated_cookies(client, "alice.eval@agentshield.org")
-    response = client.post("/api/evaluations", json=payload, cookies=cookies)
+    csrf_token = cookies.get("agentshield_csrf", "")
+    response = client.post("/api/evaluations", json=payload, headers={"X-CSRF-Token": csrf_token})
     assert response.status_code == 200
     data = response.json()
 
@@ -83,7 +87,8 @@ def test_candidate_v1_2_api_release_allowed(client):
     assert client.post("/api/evaluations", json=payload).status_code == 401
 
     cookies = get_authenticated_cookies(client, "bob.eval@agentshield.org")
-    response = client.post("/api/evaluations", json=payload, cookies=cookies)
+    csrf_token = cookies.get("agentshield_csrf", "")
+    response = client.post("/api/evaluations", json=payload, headers={"X-CSRF-Token": csrf_token})
     assert response.status_code == 200
     data = response.json()
     assert data["passed"] == 24

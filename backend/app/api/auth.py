@@ -18,19 +18,41 @@ from backend.app.schemas.auth import (
     UserResponse,
     AuthStatusResponse,
 )
-from backend.app.api.deps import get_current_user_optional, get_current_user, get_session_token_from_request
+from backend.app.api.deps import (
+    get_current_user_optional,
+    get_current_user,
+    get_session_token_from_request,
+    verify_csrf_token
+)
+from backend.app.core.rate_limit import rate_limiter
+
+login_limiter = rate_limiter(
+    action="login",
+    max_requests=settings.RATE_LIMIT_LOGIN_MAX,
+    window_seconds=settings.RATE_LIMIT_LOGIN_WINDOW_SECONDS
+)
+
+register_limiter = rate_limiter(
+    action="register",
+    max_requests=settings.RATE_LIMIT_REGISTER_MAX,
+    window_seconds=settings.RATE_LIMIT_REGISTER_WINDOW_SECONDS
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     req: UserRegisterRequest,
+    request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rate_limit: None = Depends(register_limiter)
 ):
     """
     Register a new user account with Argon2id password hashing and establish a secure session.
+    Protected by database-backed rate limiting.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     normalized_email = req.email.strip().lower()
 
     # Check for existing user
@@ -93,12 +115,16 @@ def register_user(
 @router.post("/login", response_model=UserResponse)
 def login_user(
     req: UserLoginRequest,
+    request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _rate_limit: None = Depends(login_limiter)
 ):
     """
     Authenticate user credentials, issue an opaque session token, and set HttpOnly cookies.
+    Protected by database-backed rate limiting.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     normalized_email = req.email.strip().lower()
 
     user = db.query(User).filter(User.email == normalized_email).first()
@@ -151,11 +177,13 @@ def login_user(
 
 @router.get("/me", response_model=AuthStatusResponse)
 def get_auth_status(
+    response: Response,
     current_user: User = Depends(get_current_user_optional)
 ):
     """
     Check current session status and return authenticated user profile.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     if not current_user:
         return {"authenticated": False, "user": None}
     return {"authenticated": True, "user": current_user}
@@ -164,11 +192,13 @@ def get_auth_status(
 def logout_user(
     request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _csrf: None = Depends(verify_csrf_token)
 ):
     """
     Revoke active session token in the database and clear authentication cookies.
     """
+    response.headers["Cache-Control"] = "no-store, no-cache, private, must-revalidate"
     token = get_session_token_from_request(request)
     if token:
         token_hash = hash_session_token(token)

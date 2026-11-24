@@ -24,6 +24,8 @@ services:
       AGENTSHIELD_LIVE_LLM: "false"
       COOKIE_SECURE: "false"
       COOKIE_SAMESITE: "lax"
+      RATE_LIMIT_LOGIN_MAX: "10"
+      RATE_LIMIT_REGISTER_MAX: "5"
     depends_on:
       db:
         condition: service_healthy
