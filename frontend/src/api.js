@@ -34,3 +34,12 @@ export const API_ENDPOINTS = {
   scenarios: `${API_BASE}/api/scenarios`,
   scenarioDetails: (id) => `${API_BASE}/api/scenarios/${encodeURIComponent(id)}`,
 };
+
+/**
+ * Extracts the CSRF token from the 'agentshield_csrf' cookie for Double-Submit protection.
+ */
+export function getCsrfToken() {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(new RegExp('(^|;\\s*)agentshield_csrf=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : '';
+}

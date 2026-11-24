@@ -59,3 +59,29 @@ def get_current_user(
             detail="Authentication required. Please log in to access this resource."
         )
     return current_user
+
+def verify_csrf_token(request: Request) -> None:
+    """
+    Validate CSRF token for state-mutating requests using the Double-Submit Cookie pattern.
+    - If authenticated via Bearer token, CSRF check is bypassed.
+    - If authenticated via cookie session, the incoming X-CSRF-Token header must match the agentshield_csrf cookie.
+    """
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return
+
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return
+
+    session_cookie = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not session_cookie:
+        return
+
+    csrf_cookie = request.cookies.get(settings.CSRF_COOKIE_NAME)
+    csrf_header = request.headers.get("X-CSRF-Token")
+
+    if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF token validation failed. Missing or invalid X-CSRF-Token header."
+        )

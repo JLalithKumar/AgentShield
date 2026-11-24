@@ -107,10 +107,10 @@ export default function WorkspaceShell({
               <button
                 type="button"
                 onClick={onGoHome}
-                aria-label="Public Homepage"
+                aria-label="AgentShield Home"
               >
                 <Icon name="arrow" size={19} aria-hidden="true" style={{ transform: 'rotate(180deg)' }} />
-                <span>Public Homepage</span>
+                <span>AgentShield Home</span>
               </button>
             )}
             {Object.entries(pages).map(([id, [name, icon]]) => (
