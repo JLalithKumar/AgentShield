@@ -1,3 +1,5 @@
+import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,8 +11,13 @@ from backend.app.api.scenarios import router as scenarios_router
 from backend.app.api.banking import router as banking_router
 from backend.app.api.auth import router as auth_router
 
-# Initialize database schema
-init_db()
+logger = logging.getLogger(__name__)
+
+# Initialize database schema safely
+try:
+    init_db()
+except Exception as exc:
+    logger.warning(f"Initial database synchronization deferred: {exc}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -24,6 +31,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$" if os.getenv("VERCEL") else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

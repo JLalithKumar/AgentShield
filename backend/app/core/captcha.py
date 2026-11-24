@@ -102,7 +102,12 @@ def verify_turnstile_token(token: Optional[str], remote_ip: Optional[str] = None
     if settings.TURNSTILE_EXPECTED_HOSTNAMES:
         expected = [h.strip().lower() for h in settings.TURNSTILE_EXPECTED_HOSTNAMES.split(",") if h.strip()]
         token_hostname = (result.get("hostname") or "").lower()
-        if expected and token_hostname and token_hostname not in expected and token_hostname not in ("testserver", "example.com"):
+        is_wildcard_match = any(
+            (exp.startswith("*.") and token_hostname.endswith(exp[1:])) or
+            (exp == "vercel.app" and (token_hostname == "vercel.app" or token_hostname.endswith(".vercel.app")))
+            for exp in expected
+        )
+        if expected and token_hostname and token_hostname not in expected and token_hostname not in ("testserver", "example.com") and not is_wildcard_match:
             logger.warning(f"Turnstile hostname mismatch: '{token_hostname}' not in {expected}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
