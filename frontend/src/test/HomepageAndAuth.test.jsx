@@ -42,12 +42,12 @@ describe('Homepage Component', () => {
     expect(
       screen.getByRole('heading', { name: /Safe Change Control for AI Banking Agents/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /launch evaluation console/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /explore 24 banking scenarios/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /launch evaluation engine/i })[0]).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /discover how it works/i })).toBeInTheDocument();
 
     // Problem Statement & T002 Mention
     expect(screen.getByRole('heading', { name: /Why Financial AI Agents Fail Silently in Production/i })).toBeInTheDocument();
-    expect(screen.getByText(/Scenario T002 • Failed Payment/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Scenario T002 • Failed Payment/i)[0]).toBeInTheDocument();
 
     // 5-Stage Workflow Pipeline
     expect(screen.getByRole('heading', { name: /The 5-Stage Evaluation Pipeline/i })).toBeInTheDocument();
@@ -65,8 +65,7 @@ describe('Homepage Component', () => {
     expect(screen.getByText('Compliance & Risk')).toBeInTheDocument();
   });
 
-  it('toggles interactive hero comparison between Candidate v1.1 and v1.2', async () => {
-    const user = userEvent.setup();
+  it('renders clean conceptual architecture visual without static candidate comparison tabs', () => {
     render(
       <Homepage
         user={null}
@@ -78,40 +77,60 @@ describe('Homepage Component', () => {
       />
     );
 
-    // Candidate v1.1 is active by default -> BLOCKED
-    expect(screen.getAllByText('BLOCKED')[0]).toBeInTheDocument();
-    expect(screen.getByText(/PAYMENT_STATUS_MISMATCH/i)).toBeInTheDocument();
+    // Verify static preview tabs are removed from homepage per Photo 3
+    expect(screen.queryByRole('tab', { name: /Candidate v1\.1/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Candidate v1\.2/i })).not.toBeInTheDocument();
 
-    // Switch to Candidate v1.2 tab
-    const tabV12 = screen.getByRole('tab', { name: /Candidate v1\.2/i });
-    await user.click(tabV12);
-
-    expect(screen.getAllByText('ALLOWED')[0]).toBeInTheDocument();
-    expect(screen.getByText(/24\/24 scenarios passed/i)).toBeInTheDocument();
+    // Verify conceptual engine graphic is present
+    expect(screen.getByRole('region', { name: /AgentShield Safety Engine Architecture/i })).toBeInTheDocument();
+    expect(screen.getByText(/AgentShield Core/i)).toBeInTheDocument();
+    expect(screen.getByText(/Candidate Agent Response/i)).toBeInTheDocument();
+    expect(screen.getByText(/Banking Ledger State/i)).toBeInTheDocument();
+    expect(screen.getByText(/Policy Invariant Verification/i)).toBeInTheDocument();
+    expect(screen.getByText(/Release Gate Decision/i)).toBeInTheDocument();
   });
 
-  it('displays user profile in header when logged in', () => {
+  it('displays user profile in header when logged in and toggles accessible account dropdown', async () => {
+    const userEventSetup = userEvent.setup();
     const mockUser = {
       id: 1,
       full_name: 'Jane Doe',
       email: 'jane@bank.com',
     };
+    const onSignOut = vi.fn();
+    const onOpenConsole = vi.fn();
 
     render(
       <Homepage
         user={mockUser}
-        onOpenConsole={vi.fn()}
+        onOpenConsole={onOpenConsole}
         onOpenLibrary={vi.fn()}
         onOpenSignIn={vi.fn()}
         onOpenSignUp={vi.fn()}
-        onSignOut={vi.fn()}
+        onSignOut={onSignOut}
       />
     );
 
+    // User name shown in navbar avatar trigger
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /launch engine/i })).toBeInTheDocument();
+
+    // Click avatar button to open dropdown
+    const avatarBtn = screen.getByRole('button', { name: /user account menu for Jane Doe/i });
+    expect(avatarBtn).toHaveAttribute('aria-expanded', 'false');
+    await userEventSetup.click(avatarBtn);
+
+    // Dropdown is open
+    expect(avatarBtn).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('jane@bank.com')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /go to dashboard/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /go to dashboard/i })).toBeInTheDocument();
+
+    const signOutBtn = screen.getByRole('menuitem', { name: /sign out/i });
+    expect(signOutBtn).toBeInTheDocument();
+
+    // Click sign out
+    await userEventSetup.click(signOutBtn);
+    expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -228,8 +247,8 @@ describe('App Authentication Guards and User Isolation', () => {
     const user = userEvent.setup();
     render(<App initialView="home" initialUser={null} />);
 
-    // Click hero "Start Evaluating"
-    const startBtn = screen.getByRole('button', { name: /launch evaluation console/i });
+    // Click hero "Launch Evaluation Engine"
+    const startBtn = screen.getAllByRole('button', { name: /launch evaluation (engine|console)/i })[0];
     await user.click(startBtn);
 
     // Explanatory message and AuthModal shown
@@ -252,8 +271,8 @@ describe('App Authentication Guards and User Isolation', () => {
     const user = userEvent.setup();
     render(<App initialView="home" initialUser={null} />);
 
-    // Open library first (public/unauthenticated exploration allowed)
-    await user.click(screen.getByRole('button', { name: /explore 24 banking scenarios/i }));
+    // Open library from footer (public/unauthenticated exploration allowed)
+    await user.click(screen.getByRole('button', { name: /scenario library/i }));
     expect(screen.getByRole('heading', { name: 'Scenario Library' })).toBeInTheDocument();
 
     // Now try to navigate to protected "Evaluation Console" in sidebar
