@@ -88,7 +88,7 @@ def init_neon_database(database_url: str = None) -> bool:
     # Perform table inspection
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
-    expected_tables = ["users", "auth_sessions", "evaluation_runs", "scenario_results", "evidence_traces"]
+    expected_tables = ["users", "auth_sessions", "evaluation_runs", "scenario_results", "evidence_traces", "rate_limit_records"]
     
     print("\nDatabase Schema Verification:")
     all_ok = True

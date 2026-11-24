@@ -24,7 +24,19 @@ from backend.app.api.deps import (
     get_session_token_from_request,
     verify_csrf_token
 )
-from backend.app.core.captcha import get_captcha_verifier
+from backend.app.core.rate_limit import rate_limiter
+
+login_limiter = rate_limiter(
+    action="login",
+    max_requests=settings.RATE_LIMIT_LOGIN_MAX,
+    window_seconds=settings.RATE_LIMIT_LOGIN_WINDOW_SECONDS
+)
+
+register_limiter = rate_limiter(
+    action="register",
+    max_requests=settings.RATE_LIMIT_REGISTER_MAX,
+    window_seconds=settings.RATE_LIMIT_REGISTER_WINDOW_SECONDS
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -34,15 +46,12 @@ def register_user(
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
-    captcha_verifier = Depends(get_captcha_verifier)
+    _rate_limit: None = Depends(register_limiter)
 ):
     """
     Register a new user account with Argon2id password hashing and establish a secure session.
-    Enforces Cloudflare Turnstile CAPTCHA verification.
+    Protected by database-backed rate limiting.
     """
-    client_ip = request.client.host if request.client else None
-    captcha_verifier(req.turnstile_token, remote_ip=client_ip)
-
     normalized_email = req.email.strip().lower()
 
     # Check for existing user
@@ -108,15 +117,12 @@ def login_user(
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
-    captcha_verifier = Depends(get_captcha_verifier)
+    _rate_limit: None = Depends(login_limiter)
 ):
     """
     Authenticate user credentials, issue an opaque session token, and set HttpOnly cookies.
-    Enforces Cloudflare Turnstile CAPTCHA verification.
+    Protected by database-backed rate limiting.
     """
-    client_ip = request.client.host if request.client else None
-    captcha_verifier(req.turnstile_token, remote_ip=client_ip)
-
     normalized_email = req.email.strip().lower()
 
     user = db.query(User).filter(User.email == normalized_email).first()

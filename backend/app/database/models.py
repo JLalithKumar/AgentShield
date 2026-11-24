@@ -79,3 +79,10 @@ class EvidenceTrace(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     scenario_result = relationship("ScenarioResult", back_populates="trace")
+
+class RateLimitRecord(Base):
+    __tablename__ = "rate_limit_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(255), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True, nullable=False)

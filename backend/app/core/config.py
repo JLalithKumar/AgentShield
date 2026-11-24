@@ -42,15 +42,12 @@ class Settings:
     COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "true" if os.getenv("VERCEL") else "false").lower() == "true"
     COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
 
-    # Cloudflare Turnstile CAPTCHA Configuration
-    # Official Cloudflare test keys default for development & testing
-    # Sitekey: 1x00000000000000000000AA (always passes)
-    # Secret:  1x0000000000000000000000000000000AA (always passes)
-    TURNSTILE_SITE_KEY: str = os.getenv("TURNSTILE_SITE_KEY", "1x00000000000000000000AA")
-    TURNSTILE_SECRET_KEY: str = os.getenv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
-    CAPTCHA_MODE: str = os.getenv("CAPTCHA_MODE", "test").lower()
-    TURNSTILE_EXPECTED_HOSTNAMES: str = os.getenv("TURNSTILE_EXPECTED_HOSTNAMES", "localhost,127.0.0.1,testserver,example.com,*.vercel.app")
-    TURNSTILE_TIMEOUT_SECONDS: float = float(os.getenv("TURNSTILE_TIMEOUT_SECONDS", "5.0"))
-    TURNSTILE_VERIFY_URL: str = os.getenv("TURNSTILE_VERIFY_URL", "https://challenges.cloudflare.com/turnstile/v0/siteverify")
+    # Brute-force & Abuse Rate Limiting (Serverless & Persistent)
+    RATE_LIMIT_LOGIN_MAX: int = int(os.getenv("RATE_LIMIT_LOGIN_MAX", "10"))
+    RATE_LIMIT_LOGIN_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_LOGIN_WINDOW_SECONDS", "60"))
+    RATE_LIMIT_REGISTER_MAX: int = int(os.getenv("RATE_LIMIT_REGISTER_MAX", "5"))
+    RATE_LIMIT_REGISTER_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_REGISTER_WINDOW_SECONDS", "60"))
+    RATE_LIMIT_EVALUATIONS_MAX: int = int(os.getenv("RATE_LIMIT_EVALUATIONS_MAX", "30"))
+    RATE_LIMIT_EVALUATIONS_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_EVALUATIONS_WINDOW_SECONDS", "60"))
 
 settings = Settings()

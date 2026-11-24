@@ -87,16 +87,28 @@ describe('AuthPage Enterprise Component', () => {
     expect(onRegister).not.toHaveBeenCalled();
   });
 
-  it('displays Turnstile security challenge container', () => {
+  it('submits login credentials without requiring a CAPTCHA challenge', async () => {
+    const user = userEvent.setup();
+    const onLogin = vi.fn().mockResolvedValue({});
+
     render(
       <AuthPage
-        onLogin={vi.fn()}
+        onLogin={onLogin}
         onRegister={vi.fn()}
       />
     );
 
-    expect(screen.getByText('Security Verification')).toBeInTheDocument();
-    expect(screen.getByTestId('turnstile-widget')).toBeInTheDocument();
+    const emailInput = screen.getByLabelText(/email/i);
+    const pwdInput = screen.getByLabelText(/^password/i);
+    const submitBtn = screen.getByRole('button', { name: /sign in to agentshield/i });
+
+    await user.type(emailInput, 'engineer@bank.com');
+    await user.type(pwdInput, 'ValidPassword123!');
+    await user.click(submitBtn);
+
+    expect(onLogin).toHaveBeenCalledWith('engineer@bank.com', 'ValidPassword123!');
+    expect(screen.queryByTestId('turnstile-widget')).not.toBeInTheDocument();
+    expect(screen.getByText(/Protected by Argon2id password encryption/i)).toBeInTheDocument();
   });
 
   it('toggles password visibility with accessible button', async () => {
