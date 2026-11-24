@@ -24,6 +24,10 @@ services:
       AGENTSHIELD_LIVE_LLM: "false"
       COOKIE_SECURE: "false"
       COOKIE_SAMESITE: "lax"
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
+      CAPTCHA_MODE: ${CAPTCHA_MODE:-test}
+      TURNSTILE_EXPECTED_HOSTNAMES: ${TURNSTILE_EXPECTED_HOSTNAMES:-localhost,127.0.0.1,testserver,example.com}
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +43,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
