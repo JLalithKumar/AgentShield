@@ -18,19 +18,31 @@ from backend.app.schemas.auth import (
     UserResponse,
     AuthStatusResponse,
 )
-from backend.app.api.deps import get_current_user_optional, get_current_user, get_session_token_from_request
+from backend.app.api.deps import (
+    get_current_user_optional,
+    get_current_user,
+    get_session_token_from_request,
+    verify_csrf_token
+)
+from backend.app.core.captcha import get_captcha_verifier
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     req: UserRegisterRequest,
+    request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    captcha_verifier = Depends(get_captcha_verifier)
 ):
     """
     Register a new user account with Argon2id password hashing and establish a secure session.
+    Enforces Cloudflare Turnstile CAPTCHA verification.
     """
+    client_ip = request.client.host if request.client else None
+    captcha_verifier(req.turnstile_token, remote_ip=client_ip)
+
     normalized_email = req.email.strip().lower()
 
     # Check for existing user
@@ -93,12 +105,18 @@ def register_user(
 @router.post("/login", response_model=UserResponse)
 def login_user(
     req: UserLoginRequest,
+    request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    captcha_verifier = Depends(get_captcha_verifier)
 ):
     """
     Authenticate user credentials, issue an opaque session token, and set HttpOnly cookies.
+    Enforces Cloudflare Turnstile CAPTCHA verification.
     """
+    client_ip = request.client.host if request.client else None
+    captcha_verifier(req.turnstile_token, remote_ip=client_ip)
+
     normalized_email = req.email.strip().lower()
 
     user = db.query(User).filter(User.email == normalized_email).first()
@@ -164,7 +182,8 @@ def get_auth_status(
 def logout_user(
     request: Request,
     response: Response,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _csrf: None = Depends(verify_csrf_token)
 ):
     """
     Revoke active session token in the database and clear authentication cookies.

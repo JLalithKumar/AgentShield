@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 EMAIL_REGEX = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
@@ -8,10 +8,12 @@ class UserRegisterRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100, description="Full name of the user")
     email: str = Field(..., pattern=EMAIL_REGEX, description="Valid email address")
     password: str = Field(..., min_length=8, max_length=128, description="Password with at least 8 characters")
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile CAPTCHA response token")
 
 class UserLoginRequest(BaseModel):
     email: str = Field(..., pattern=EMAIL_REGEX, description="Registered email address")
     password: str = Field(..., min_length=1, description="Account password")
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile CAPTCHA response token")
 
 class UserResponse(BaseModel):
     id: int
@@ -20,8 +22,7 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AuthStatusResponse(BaseModel):
     authenticated: bool

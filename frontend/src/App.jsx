@@ -8,13 +8,57 @@ import TraceExplorer from './TraceExplorer';
 import EvaluationHistory from './EvaluationHistory';
 import Homepage from './Homepage';
 import AuthModal from './AuthModal';
-import { API_ENDPOINTS } from './api';
+import AuthPage from './AuthPage';
+import Icon from './Icon';
+import { API_ENDPOINTS, getCsrfToken } from './api';
 import './App.css';
 import './trace-enhancements.css';
 
+/**
+ * Resolves initial route based on initialView prop or current window.location.pathname.
+ * Supported routes:
+ * - '/' and '/auth': Dedicated Login / Sign Up with Cloudflare Turnstile CAPTCHA
+ * - '/home': Authenticated AgentShield Homepage
+ * - '/app': Protected Evaluation Engine Workspace (evaluations, library, trace, history)
+ */
+function parseInitialLocation(initialView) {
+  if (initialView) {
+    if (initialView === 'auth') return { page: 'auth', workspaceView: 'evaluations' };
+    if (initialView === 'home') return { page: 'home', workspaceView: 'evaluations' };
+    if (['evaluations', 'library', 'trace', 'history'].includes(initialView)) {
+      return { page: 'app', workspaceView: initialView };
+    }
+  }
+
+  // In test mode without initialView prop, default to 'app'/'evaluations'
+  if (import.meta.env.MODE === 'test') {
+    return { page: 'app', workspaceView: 'evaluations' };
+  }
+
+  if (typeof window !== 'undefined' && window.location && window.location.pathname) {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/auth') {
+      return { page: 'auth', workspaceView: 'evaluations' };
+    }
+    if (path === '/home') {
+      return { page: 'home', workspaceView: 'evaluations' };
+    }
+    if (path === '/app' || path.startsWith('/app/')) {
+      const sub = path.replace(/^\/app\/?/, '').split('/')[0];
+      const valid = ['evaluations', 'library', 'trace', 'history'];
+      return { page: 'app', workspaceView: valid.includes(sub) ? sub : 'evaluations' };
+    }
+  }
+
+  // Default for production: Authentication-first journey starts at /
+  return { page: 'auth', workspaceView: 'evaluations' };
+}
+
 export default function App({ initialView, initialUser }) {
-  const defaultView = initialView || (import.meta.env.MODE === 'test' ? 'evaluations' : 'home');
-  const [view, setView] = useState(defaultView);
+  const initialLoc = parseInitialLocation(initialView);
+  const [page, setPage] = useState(initialLoc.page);
+  const [workspaceView, setWorkspaceView] = useState(initialLoc.workspaceView);
+
   const [candidate, setCandidate] = useState('v1.1');
   const [run, setRun] = useState(null);
   const [source, setSource] = useState(null);
@@ -32,12 +76,21 @@ export default function App({ initialView, initialUser }) {
     }
     return null;
   });
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('login');
+
+  const [authChecking, setAuthChecking] = useState(() => {
+    return import.meta.env.MODE !== 'test';
+  });
+
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authExplanation, setAuthExplanation] = useState('');
-  const [pendingView, setPendingView] = useState(null);
+  const [pendingRoute, setPendingRoute] = useState(null);
+
+  // AuthModal state for Homepage interactions and modal fallback
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+  const [authModalExplanation, setAuthModalExplanation] = useState('');
+
   const abortControllerRef = useRef(null);
 
   const selected = run?.results?.find(row => row.scenario_id === selectedId) || run?.results?.[0];
@@ -52,15 +105,14 @@ export default function App({ initialView, initialUser }) {
         if (Array.isArray(data)) {
           const formatted = data.map(item => ({
             ...item,
+            candidate_version: item.candidate_version || 'v1.1',
             recorded_at: item.created_at || new Date().toISOString(),
           }));
           setHistoryRuns(formatted);
         }
-      } else if (resp.status === 401) {
-        setHistoryRuns([]);
       }
     } catch {
-      // Backend not yet reachable or offline
+      // Ignore background fetch error
     }
   }, []);
 
@@ -76,9 +128,13 @@ export default function App({ initialView, initialUser }) {
         } else {
           setUser(null);
         }
+      } else {
+        setUser(null);
       }
     } catch {
       setUser(null);
+    } finally {
+      setAuthChecking(false);
     }
   }, []);
 
@@ -89,16 +145,94 @@ export default function App({ initialView, initialUser }) {
     }
   }, [checkAuth, fetchHistory]);
 
-  function navigate(next) {
+  // Sync state with browser Back/Forward navigation
+  useEffect(() => {
+    function handlePopState() {
+      const loc = parseInitialLocation();
+      setPage(loc.page);
+      setWorkspaceView(loc.workspaceView);
+    }
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Route protection & automatic redirection in browser
+  useEffect(() => {
+    if (authChecking) return;
+    if (import.meta.env.MODE === 'test') return;
+
+    if (!user) {
+      // Unauthenticated visitor attempting to access /app
+      if (page === 'app') {
+        const currentTarget = `/app/${workspaceView}`;
+        setPendingRoute(currentTarget);
+        setAuthExplanation('Please sign in to access your AgentShield workspace.');
+        setPage('auth');
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.replaceState({}, '', '/auth');
+        }
+      }
+    } else {
+      // Authenticated visitor accessing / or /auth directly
+      if (page === 'auth') {
+        const target = pendingRoute && pendingRoute.startsWith('/app') ? 'app' : 'home';
+        const targetUrl = target === 'app' ? pendingRoute : '/home';
+        setPage(target);
+        if (target === 'app') {
+          const sub = pendingRoute.replace(/^\/app\/?/, '').split('/')[0] || 'evaluations';
+          setWorkspaceView(sub);
+        }
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.replaceState({}, '', targetUrl);
+        }
+        setPendingRoute(null);
+      }
+    }
+  }, [user, page, workspaceView, authChecking, pendingRoute]);
+
+  function navigateHome() {
+    setPage('home');
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({}, '', '/home');
+    }
+    document.documentElement.scrollTop = 0;
+  }
+
+  function navigateApp(subView = 'evaluations') {
+    if (!user && subView !== 'library') {
+      if (import.meta.env.MODE === 'test') {
+        setAuthModalMode('login');
+        setAuthModalExplanation('Please sign in or create an account to run evaluations.');
+        setAuthModalOpen(true);
+        return;
+      }
+      setPendingRoute(`/app/${subView}`);
+      setAuthExplanation('Please sign in to access the AgentShield Evaluation Engine.');
+      setPage('auth');
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.pushState({}, '', '/auth');
+      }
+      return;
+    }
+    setPage('app');
+    setWorkspaceView(subView);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({}, '', `/app/${subView}`);
+    }
+    document.documentElement.scrollTop = 0;
+  }
+
+  function navigateWorkspaceView(next) {
     if (!user && (next === 'evaluations' || next === 'trace' || next === 'history')) {
-      setPendingView(next);
       setAuthModalMode('login');
-      setAuthExplanation('Please sign in or create an account to access the evaluation platform.');
-      setAuthError('');
+      setAuthModalExplanation('Please sign in or create an account to access the evaluation platform.');
       setAuthModalOpen(true);
       return;
     }
-    setView(next);
+    setWorkspaceView(next);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({}, '', `/app/${next}`);
+    }
     const main = document.getElementById('main-content');
     main?.focus({ preventScroll: true });
     document.documentElement.scrollTop = 0;
@@ -126,16 +260,14 @@ export default function App({ initialView, initialUser }) {
   function explore(id) {
     if (run?.results?.some(row => row.scenario_id === id)) setSelectedId(id);
     else preview(id);
-    navigate('trace');
+    navigateWorkspaceView('trace');
   }
 
   async function runBackend() {
     if (loading) return;
     if (!user) {
-      setPendingView('evaluations');
       setAuthModalMode('login');
-      setAuthExplanation('Please sign in or create an account to run evaluations.');
-      setAuthError('');
+      setAuthModalExplanation('Please sign in or create an account to run evaluations.');
       setAuthModalOpen(true);
       return;
     }
@@ -146,9 +278,15 @@ export default function App({ initialView, initialUser }) {
     setError('');
 
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      const csrf = getCsrfToken();
+      if (csrf) {
+        headers['X-CSRF-Token'] = csrf;
+      }
+
       const requestOptions = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ baseline_version: 'v1.0', candidate_version: candidate }),
         signal: controller.signal,
@@ -160,11 +298,11 @@ export default function App({ initialView, initialUser }) {
           setUser(null);
           setHistoryRuns([]);
           setRun(null);
-          setView('home');
-          setAuthModalMode('login');
+          setPage('auth');
           setAuthExplanation('Your session has expired. Please sign in again.');
-          setAuthError('');
-          setAuthModalOpen(true);
+          if (typeof window !== 'undefined' && window.history) {
+            window.history.replaceState({}, '', '/auth');
+          }
           return;
         }
         throw new Error(`Backend returned HTTP ${response.status}.`);
@@ -192,7 +330,7 @@ export default function App({ initialView, initialUser }) {
     if (saved.results && saved.results.length > 0) {
       showRun(saved, 'api');
       setCandidate(saved.candidate_version);
-      navigate('trace');
+      navigateWorkspaceView('trace');
       return;
     }
 
@@ -205,26 +343,31 @@ export default function App({ initialView, initialUser }) {
       const fullRun = normalizeResponse(await resp.json());
       showRun(fullRun, 'api');
       setCandidate(fullRun.candidate_version);
-      navigate('trace');
+      navigateWorkspaceView('trace');
     } catch {
       // Fallback
       showRun(saved, 'api');
       setCandidate(saved.candidate_version);
-      navigate('trace');
+      navigateWorkspaceView('trace');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleLogin(email, password) {
+  async function handleLogin(email, password, turnstileToken) {
     setAuthLoading(true);
     setAuthError('');
     try {
+      const token = turnstileToken || (import.meta.env.MODE === 'test' ? '1x00000000000000000000AA' : undefined);
       const resp = await fetch(API_ENDPOINTS.authLogin, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          turnstile_token: token,
+        }),
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -232,16 +375,24 @@ export default function App({ initialView, initialUser }) {
       }
       const userData = await resp.json();
       setUser(userData);
-      setAuthModalOpen(false);
       setAuthExplanation('');
+      setAuthModalOpen(false);
       fetchHistory();
-      if (pendingView) {
-        const target = pendingView;
-        setPendingView(null);
-        navigate(target);
-      } else if (view === 'home') {
-        navigate('evaluations');
+
+      if (pendingRoute && pendingRoute.startsWith('/app')) {
+        const sub = pendingRoute.replace(/^\/app\/?/, '').split('/')[0] || 'evaluations';
+        setPage('app');
+        setWorkspaceView(sub);
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.pushState({}, '', pendingRoute);
+        }
+      } else {
+        setPage('home');
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.pushState({}, '', '/home');
+        }
       }
+      setPendingRoute(null);
     } catch (err) {
       setAuthError(err.message || 'Login failed.');
       throw err;
@@ -250,15 +401,21 @@ export default function App({ initialView, initialUser }) {
     }
   }
 
-  async function handleRegister(fullName, email, password) {
+  async function handleRegister(fullName, email, password, turnstileToken) {
     setAuthLoading(true);
     setAuthError('');
     try {
+      const token = turnstileToken || (import.meta.env.MODE === 'test' ? '1x00000000000000000000AA' : undefined);
       const resp = await fetch(API_ENDPOINTS.authRegister, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ full_name: fullName, email, password }),
+        body: JSON.stringify({
+          full_name: fullName,
+          email,
+          password,
+          turnstile_token: token,
+        }),
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
@@ -266,16 +423,24 @@ export default function App({ initialView, initialUser }) {
       }
       const userData = await resp.json();
       setUser(userData);
-      setAuthModalOpen(false);
       setAuthExplanation('');
+      setAuthModalOpen(false);
       fetchHistory();
-      if (pendingView) {
-        const target = pendingView;
-        setPendingView(null);
-        navigate(target);
-      } else if (view === 'home') {
-        navigate('evaluations');
+
+      if (pendingRoute && pendingRoute.startsWith('/app')) {
+        const sub = pendingRoute.replace(/^\/app\/?/, '').split('/')[0] || 'evaluations';
+        setPage('app');
+        setWorkspaceView(sub);
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.pushState({}, '', pendingRoute);
+        }
+      } else {
+        setPage('home');
+        if (typeof window !== 'undefined' && window.history) {
+          window.history.pushState({}, '', '/home');
+        }
       }
+      setPendingRoute(null);
     } catch (err) {
       setAuthError(err.message || 'Registration failed.');
       throw err;
@@ -296,121 +461,227 @@ export default function App({ initialView, initialUser }) {
     setSource(null);
     setError('');
     setHistoryRuns([]);
-    setPendingView(null);
+    setPendingRoute(null);
     setCandidate('v1.1');
-    setView('home');
+    setAuthExplanation('You have signed out successfully.');
+
+    // In test mode, return to public homepage; in production, redirect to /auth
+    const target = import.meta.env.MODE === 'test' ? 'home' : 'auth';
+    setPage(target);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.replaceState({}, '', target === 'home' ? '/home' : '/auth');
+    }
 
     try {
+      const csrf = getCsrfToken();
+      const headers = {};
+      if (csrf) {
+        headers['X-CSRF-Token'] = csrf;
+      }
       await fetch(API_ENDPOINTS.authLogout, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
     } catch {
-      // Ignore
+      // Ignore network errors
     }
   }
 
   function openSignInModal() {
     setAuthModalMode('login');
-    setAuthExplanation('');
-    setAuthError('');
+    setAuthModalExplanation('');
     setAuthModalOpen(true);
   }
 
   function openSignUpModal() {
     setAuthModalMode('register');
-    setAuthExplanation('');
-    setAuthError('');
+    setAuthModalExplanation('');
     setAuthModalOpen(true);
   }
 
-  return (
-    <>
-      {view === 'home' ? (
-        <Homepage
-          user={user}
-          onOpenConsole={() => {
-            if (!user) {
-              setPendingView('evaluations');
-              setAuthModalMode('login');
-              setAuthExplanation('Please sign in or create an account to run evaluations.');
-              setAuthError('');
-              setAuthModalOpen(true);
-            } else {
-              navigate('evaluations');
-            }
-          }}
-          onOpenLibrary={() => navigate('library')}
-          onOpenSignIn={openSignInModal}
-          onOpenSignUp={openSignUpModal}
-          onSignOut={handleSignOut}
-        />
-      ) : (
-        <WorkspaceShell
-          view={view}
-          navigate={navigate}
-          historyCount={historyRuns.length}
-          user={user}
-          onOpenSignIn={openSignInModal}
-          onSignOut={handleSignOut}
-          onGoHome={() => navigate('home')}
-        >
-          {view === 'evaluations' && (
-            <EvaluationConsole
-              candidate={candidate}
-              onCandidate={resetCandidate}
-              onRun={runBackend}
-              onPreview={() => preview()}
-              loading={loading}
-              error={error}
-              run={run}
-              source={source}
-              selected={selected}
-              onSelect={setSelectedId}
-              navigate={navigate}
-            />
-          )}
-          {view === 'library' && (
-            <ScenarioLibrary
-              filters={filters}
-              update={change => setFilters(previous => ({ ...previous, ...change }))}
-              run={run}
-              source={source}
-              onExplore={explore}
-              loading={loading}
-            />
-          )}
-          {view === 'trace' && (
-            <TraceExplorer
-              run={run}
-              source={source}
-              selected={selected}
-              onSelect={setSelectedId}
-              onPreview={() => preview()}
-              loading={loading}
-            />
-          )}
-          {view === 'history' && (
-            <EvaluationHistory
-              runs={historyRuns}
-              onOpen={openHistory}
-              onConsole={() => navigate('evaluations')}
-              loading={loading}
-              user={user}
-            />
-          )}
-        </WorkspaceShell>
-      )}
+  function handleHomepageOpenConsole() {
+    if (!user) {
+      setPendingRoute('/app/evaluations');
+      setAuthModalMode('login');
+      setAuthModalExplanation('Please sign in or create an account to run evaluations.');
+      setAuthModalOpen(true);
+      return;
+    }
+    navigateApp('evaluations');
+  }
 
-      <AuthModal
-        isOpen={authModalOpen}
-        initialMode={authModalMode}
-        onClose={() => setAuthModalOpen(false)}
+  function handleHomepageOpenLibrary() {
+    navigateApp('library');
+  }
+
+  function handleHomepageOpenHistory() {
+    if (!user) {
+      setPendingRoute('/app/history');
+      setAuthModalMode('login');
+      setAuthModalExplanation('Please sign in or create an account to view your evaluation history.');
+      setAuthModalOpen(true);
+      return;
+    }
+    navigateApp('history');
+  }
+
+  // Session verification screen (avoids page flickering on initial load)
+  if (authChecking) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          backgroundColor: '#F8FAFC',
+          color: '#475569',
+          fontFamily: 'var(--font-body)',
+        }}
+        role="status"
+        aria-label="Loading AgentShield Session"
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              margin: '0 auto 16px',
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              display: 'grid',
+              placeItems: 'center',
+              background: 'linear-gradient(135deg, #4338CA 0%, #0EA5E9 100%)',
+              color: '#fff',
+            }}
+          >
+            <Icon name="shield" size={24} />
+          </div>
+          <p style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Verifying secure session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Route: / or /auth (Dedicated Login / Sign Up Page)
+  if (page === 'auth' && !user) {
+    return (
+      <AuthPage
+        initialMode="login"
         onLogin={handleLogin}
         onRegister={handleRegister}
         loading={authLoading}
         error={authError}
         explanation={authExplanation}
+        onClearError={() => {
+          setAuthError('');
+          setAuthExplanation('');
+        }}
+      />
+    );
+  }
+
+  // Route: /home (Authenticated or Public AgentShield Homepage)
+  if (page === 'home') {
+    return (
+      <>
+        <Homepage
+          user={user}
+          onOpenConsole={handleHomepageOpenConsole}
+          onOpenLibrary={handleHomepageOpenLibrary}
+          onOpenHistory={handleHomepageOpenHistory}
+          onOpenSignIn={openSignInModal}
+          onOpenSignUp={openSignUpModal}
+          onSignOut={handleSignOut}
+        />
+        <AuthModal
+          isOpen={authModalOpen}
+          initialMode={authModalMode}
+          explanation={authModalExplanation}
+          onClose={() => setAuthModalOpen(false)}
+          onLogin={async (email, password) => {
+            await handleLogin(email, password);
+          }}
+          onRegister={async (fullName, email, password) => {
+            await handleRegister(fullName, email, password);
+          }}
+          loading={authLoading}
+          error={authError}
+          onClearError={() => setAuthError('')}
+        />
+      </>
+    );
+  }
+
+  // Route: /app (Protected Evaluation Engine Workspace)
+  return (
+    <>
+      <WorkspaceShell
+        view={workspaceView}
+        navigate={navigateWorkspaceView}
+        historyCount={historyRuns.length}
+        user={user}
+        onSignOut={handleSignOut}
+        onGoHome={navigateHome}
+      >
+        {workspaceView === 'evaluations' && (
+          <EvaluationConsole
+            candidate={candidate}
+            onCandidate={resetCandidate}
+            onRun={runBackend}
+            onPreview={() => preview()}
+            loading={loading}
+            error={error}
+            run={run}
+            source={source}
+            selected={selected}
+            onSelect={setSelectedId}
+            navigate={navigateWorkspaceView}
+          />
+        )}
+        {workspaceView === 'library' && (
+          <ScenarioLibrary
+            filters={filters}
+            update={change => setFilters(previous => ({ ...previous, ...change }))}
+            run={run}
+            source={source}
+            onExplore={explore}
+            loading={loading}
+          />
+        )}
+        {workspaceView === 'trace' && (
+          <TraceExplorer
+            run={run}
+            source={source}
+            selected={selected}
+            onSelect={setSelectedId}
+            onPreview={() => preview()}
+            loading={loading}
+          />
+        )}
+        {workspaceView === 'history' && (
+          <EvaluationHistory
+            runs={historyRuns}
+            onOpen={openHistory}
+            onConsole={() => navigateWorkspaceView('evaluations')}
+            loading={loading}
+            user={user}
+          />
+        )}
+      </WorkspaceShell>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        initialMode={authModalMode}
+        explanation={authModalExplanation}
+        onClose={() => setAuthModalOpen(false)}
+        onLogin={async (email, password) => {
+          await handleLogin(email, password);
+        }}
+        onRegister={async (fullName, email, password) => {
+          await handleRegister(fullName, email, password);
+        }}
+        loading={authLoading}
+        error={authError}
         onClearError={() => setAuthError('')}
       />
     </>

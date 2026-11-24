@@ -12,7 +12,7 @@ from backend.app.schemas.evaluation import (
 from backend.app.runner.test_runner import run_evaluation
 from backend.app.database.session import get_db
 from backend.app.database.models import EvaluationRun, ScenarioResult, EvidenceTrace, User
-from backend.app.api.deps import get_current_user
+from backend.app.api.deps import get_current_user, verify_csrf_token
 
 router = APIRouter(prefix="/evaluations", tags=["Evaluations"])
 
@@ -21,6 +21,7 @@ def trigger_evaluation(
     request: EvaluationRequest,
     response: Response,
     current_user: User = Depends(get_current_user),
+    _csrf: None = Depends(verify_csrf_token),
     db: Session = Depends(get_db)
 ):
     """

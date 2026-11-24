@@ -6,6 +6,7 @@ export default function Homepage({
   user,
   onOpenConsole,
   onOpenLibrary,
+  onOpenHistory,
   onOpenSignIn,
   onOpenSignUp,
   onSignOut,
@@ -37,12 +38,12 @@ export default function Homepage({
 
           {/* Desktop Navigation Links */}
           <nav className="stitch-nav" aria-label="Main Navigation">
-            <a href="#features">Features</a>
+            <a href="#">Home</a>
+            <button type="button" className="stitch-nav-btn" onClick={onOpenConsole}>Evaluation Engine</button>
+            <button type="button" className="stitch-nav-btn" onClick={onOpenLibrary}>Scenario Library</button>
+            <button type="button" className="stitch-nav-btn" onClick={onOpenHistory || onOpenConsole}>Evaluation History</button>
             <a href="#how-it-works">How It Works</a>
-            <a href="#comparison">Why AgentShield</a>
-            <a href="#personas">Personas</a>
             <a href="#security">Security</a>
-            <a href="#faq">FAQ</a>
           </nav>
 
           {/* Right Action / Auth Buttons */}
@@ -62,8 +63,9 @@ export default function Homepage({
                   type="button"
                   className="stitch-btn-primary stitch-btn-sm"
                   onClick={onOpenConsole}
+                  aria-label="Go to Dashboard"
                 >
-                  <span>Go to Dashboard</span>
+                  <span>Launch Engine</span>
                   <Icon name="arrow" size={14} />
                 </button>
                 <button
@@ -109,7 +111,15 @@ export default function Homepage({
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="stitch-mobile-drawer" role="navigation" aria-label="Mobile Navigation">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); onOpenConsole(); }}>
+              Evaluation Engine
+            </button>
+            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); onOpenLibrary(); }}>
+              Scenario Library
+            </button>
+            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); if (onOpenHistory) onOpenHistory(); else onOpenConsole(); }}>
+              Evaluation History
+            </button>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <a href="#comparison" onClick={() => setMobileMenuOpen(false)}>Why AgentShield</a>
             <a href="#personas" onClick={() => setMobileMenuOpen(false)}>Personas</a>
@@ -119,7 +129,7 @@ export default function Homepage({
               {user ? (
                 <>
                   <button type="button" className="stitch-btn-primary w-full" onClick={() => { setMobileMenuOpen(false); onOpenConsole(); }}>
-                    Go to Dashboard
+                    Launch Evaluation Engine
                   </button>
                   <button type="button" className="stitch-btn-ghost w-full" onClick={() => { setMobileMenuOpen(false); onSignOut(); }}>
                     Sign Out
@@ -174,20 +184,22 @@ export default function Homepage({
                 type="button"
                 className="stitch-btn-primary stitch-btn-lg"
                 onClick={onOpenConsole}
-                aria-label="Start Evaluating / Launch Evaluation Console"
+                aria-label="Launch Evaluation Console"
               >
                 <Icon name="bolt" size={18} />
-                <span>Start Evaluating</span>
-                <span className="stitch-btn-badge">Console</span>
+                <span>Launch Evaluation Engine</span>
+                <span className="stitch-btn-badge">Engine</span>
               </button>
 
-              <a
-                href="#how-it-works"
+              <button
+                type="button"
                 className="stitch-btn-secondary stitch-btn-lg"
+                onClick={onOpenHistory || onOpenConsole}
+                aria-label="View My Evaluation History"
               >
-                <Icon name="activity" size={18} />
-                <span>Explore the Workflow</span>
-              </a>
+                <Icon name="clock" size={18} />
+                <span>View My Evaluation History</span>
+              </button>
 
               <button
                 type="button"
@@ -952,17 +964,18 @@ export default function Homepage({
                     type="button"
                     className="stitch-btn-cta-primary"
                     onClick={onOpenConsole}
-                    aria-label="Launch AgentShield"
+                    aria-label="Launch Evaluation Engine"
                   >
-                    <span>Launch AgentShield</span>
+                    <span>Launch Evaluation Engine</span>
                     <Icon name="arrow" size={16} />
                   </button>
                   <button
                     type="button"
                     className="stitch-btn-cta-secondary"
-                    onClick={onOpenLibrary}
+                    onClick={onOpenHistory || onOpenConsole}
+                    aria-label="View Evaluation History"
                   >
-                    <span>View Scenario Library</span>
+                    <span>View Evaluation History</span>
                   </button>
                 </div>
               </div>
