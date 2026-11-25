@@ -46,7 +46,7 @@ export default function ScenarioLibrary({ filters, update, run, source, onExplor
             {rows.length} of {SCENARIOS.length} scenarios
           </span>
         </header>
-        <div className="filters" style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr)' }}>
+        <div className="filters filters-three">
           <label>
             Search scenarios
             <span className="search-field">

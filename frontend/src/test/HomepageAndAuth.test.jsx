@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Homepage from '../Homepage';
 import AuthModal from '../AuthModal';
@@ -90,7 +90,7 @@ describe('Homepage Component', () => {
     expect(screen.getByText(/Release Gate Decision/i)).toBeInTheDocument();
   });
 
-  it('displays user profile in header when logged in and toggles accessible account dropdown', async () => {
+  it('displays user profile in header when logged in and toggles accessible account dropdown without Go to Dashboard', async () => {
     const userEventSetup = userEvent.setup();
     const mockUser = {
       id: 1,
@@ -111,26 +111,152 @@ describe('Homepage Component', () => {
       />
     );
 
+    // Desktop nav links & Launch Engine
+    const mainNav = screen.getByRole('navigation', { name: /main navigation/i });
+    expect(within(mainNav).getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    expect(within(mainNav).getByRole('link', { name: 'How It Works' })).toBeInTheDocument();
+    expect(within(mainNav).getByRole('link', { name: 'Security' })).toBeInTheDocument();
+
+    const launchBtn = screen.getByRole('button', { name: /launch engine/i });
+    expect(launchBtn).toBeInTheDocument();
+
     // User name shown in navbar avatar trigger
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /launch engine/i })).toBeInTheDocument();
 
     // Click avatar button to open dropdown
     const avatarBtn = screen.getByRole('button', { name: /user account menu for Jane Doe/i });
     expect(avatarBtn).toHaveAttribute('aria-expanded', 'false');
     await userEventSetup.click(avatarBtn);
 
-    // Dropdown is open
+    // Dropdown is open with only user info + Sign Out (NO Go to Dashboard)
     expect(avatarBtn).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('jane@bank.com')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /go to dashboard/i })).toBeInTheDocument();
+    const menu = screen.getByRole('menu', { name: /account options/i });
+    expect(within(menu).getByText('Jane Doe')).toBeInTheDocument();
+    expect(within(menu).getByText('jane@bank.com')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /go to dashboard/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/go to dashboard/i)).not.toBeInTheDocument();
 
+    // Escape closes dropdown and restores focus
+    await userEventSetup.keyboard('{Escape}');
+    expect(avatarBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(avatarBtn).toHaveFocus();
+    await waitFor(() => {
+      expect(screen.queryByRole('menu', { name: /account options/i })).not.toBeInTheDocument();
+    });
+
+    // Reopen and click Sign Out
+    await userEventSetup.click(avatarBtn);
     const signOutBtn = screen.getByRole('menuitem', { name: /sign out/i });
-    expect(signOutBtn).toBeInTheDocument();
-
-    // Click sign out
     await userEventSetup.click(signOutBtn);
     expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('provides accessible mobile navigation drawer with Launch Engine, account info, Sign Out, and Escape/outside-click dismissal', async () => {
+    const userEventSetup = userEvent.setup();
+    const mockUser = {
+      id: 2,
+      full_name: 'Alex Morgan',
+      email: 'alex.morgan@enterprise-bank.example.com',
+    };
+    const onOpenConsole = vi.fn();
+    const onSignOut = vi.fn();
+
+    render(
+      <Homepage
+        user={mockUser}
+        onOpenConsole={onOpenConsole}
+        onOpenLibrary={vi.fn()}
+        onOpenSignIn={vi.fn()}
+        onOpenSignUp={vi.fn()}
+        onSignOut={onSignOut}
+      />
+    );
+
+    const toggleBtn = screen.getByRole('button', { name: /open navigation menu/i });
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(toggleBtn).toHaveAttribute('aria-controls', 'stitch-mobile-drawer');
+
+    // Open mobile drawer
+    await userEventSetup.click(toggleBtn);
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+    const mobileNav = screen.getByRole('navigation', { name: /mobile navigation/i });
+    expect(mobileNav).toBeInTheDocument();
+
+    // Verify required links & exclusion of workspace-only links
+    expect(within(mobileNav).getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: 'How It Works' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: 'Security' })).toBeInTheDocument();
+    expect(within(mobileNav).queryByText(/scenario library/i)).not.toBeInTheDocument();
+    expect(within(mobileNav).queryByText(/evaluation history/i)).not.toBeInTheDocument();
+
+    // Verify account info & Launch Evaluation Engine
+    expect(within(mobileNav).getByText('Alex Morgan')).toBeInTheDocument();
+    expect(within(mobileNav).getByText('alex.morgan@enterprise-bank.example.com')).toBeInTheDocument();
+
+    // Escape closes drawer and restores focus
+    await userEventSetup.keyboard('{Escape}');
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(toggleBtn).toHaveFocus();
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: /mobile navigation/i })).not.toBeInTheDocument();
+    });
+
+    // Reopen and click Launch Evaluation Engine
+    await userEventSetup.click(toggleBtn);
+    const mobileNavReopened = screen.getByRole('navigation', { name: /mobile navigation/i });
+    await userEventSetup.click(within(mobileNavReopened).getByRole('button', { name: /launch evaluation engine/i }));
+    expect(onOpenConsole).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: /mobile navigation/i })).not.toBeInTheDocument();
+    });
+
+    // Reopen and test Sign Out + outside click
+    await userEventSetup.click(toggleBtn);
+    await userEventSetup.click(document.body);
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: /mobile navigation/i })).not.toBeInTheDocument();
+    });
+
+    await userEventSetup.click(toggleBtn);
+    const mobileNavThird = screen.getByRole('navigation', { name: /mobile navigation/i });
+    await userEventSetup.click(within(mobileNavThird).getByRole('button', { name: /sign out/i }));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps mobile menu and dropdown functional when prefers-reduced-motion is enabled', async () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation(query => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      const userEventSetup = userEvent.setup();
+      render(
+        <Homepage
+          user={{ id: 3, full_name: 'Sam Patel', email: 'sam@bank.com' }}
+          onOpenConsole={vi.fn()}
+          onOpenLibrary={vi.fn()}
+          onOpenSignIn={vi.fn()}
+          onOpenSignUp={vi.fn()}
+          onSignOut={vi.fn()}
+        />
+      );
+
+      await userEventSetup.click(screen.getByRole('button', { name: /open navigation menu/i }));
+      expect(screen.getByRole('navigation', { name: /mobile navigation/i })).toBeInTheDocument();
+
+      await userEventSetup.click(screen.getByRole('button', { name: /user account menu for Sam Patel/i }));
+      expect(screen.getByRole('menu', { name: /account options/i })).toBeInTheDocument();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 });
 

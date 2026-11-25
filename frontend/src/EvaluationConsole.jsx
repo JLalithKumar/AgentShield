@@ -162,7 +162,7 @@ function ReleaseDecisionSummary({ run, onExplore }) {
               : `Candidate ${run.candidate_version || 'v1.2'} passed all ${run.total_tests} banking scenarios with 0 critical regressions. All agent claims match authoritative API evidence.`}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <Badge tone={isBlocked ? 'danger' : 'success'}>
             {isBlocked ? 'GATE: BLOCKED' : 'GATE: ALLOWED'}
           </Badge>

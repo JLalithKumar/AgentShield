@@ -149,21 +149,20 @@ export default function WorkspaceShell({
             <strong aria-current="location">{label}</strong>
           </nav>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="topbar-actions">
             <div className="environment" role="status" aria-label="System environment">
               <span><i aria-hidden="true" />Deterministic Mode</span>
               <span>24 Banking Scenarios</span>
             </div>
 
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--secondary)', fontWeight: 500 }}>
+              <div className="topbar-user">
+                <span className="topbar-user-email">
                   {user.email}
                 </span>
                 <button
                   type="button"
-                  className="secondary"
-                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  className="secondary topbar-auth-btn"
                   onClick={onSignOut}
                 >
                   Sign Out
@@ -173,8 +172,7 @@ export default function WorkspaceShell({
               onOpenSignIn && (
                 <button
                   type="button"
-                  className="secondary"
-                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  className="secondary topbar-auth-btn"
                   onClick={onOpenSignIn}
                 >
                   Sign In

@@ -186,6 +186,36 @@ nav button[aria-current="page"] {
   color: var(--text);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  min-width: 0;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar-user-email {
+  font-size: 13px;
+  color: var(--secondary);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.topbar-auth-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  min-height: 36px;
+}
+
 .environment {
   gap: 8px;
   font-size: var(--caption-size);
@@ -320,6 +350,10 @@ nav button[aria-current="page"] {
 .config-heading {
   flex-wrap: nowrap;
   justify-content: flex-start;
+}
+
+.config-heading > div {
+  min-width: 0;
 }
 
 .feature-icon {
@@ -783,6 +817,10 @@ tbody tr:last-child td {
   padding: 16px 20px;
 }
 
+.filters-three {
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(130px, 1fr));
+}
+
 .search-field {
   position: relative;
   display: block;
@@ -862,6 +900,11 @@ blockquote {
   box-shadow: inset 3px 0 var(--primary);
 }
 
+.trace-index-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .trace-index small, .trace-index strong {
   display: block;
 }
@@ -907,14 +950,17 @@ blockquote {
   .sidebar-footer { margin: 12px 0 0; padding: 12px 0 0; }
   .stage { margin: 0; }
   .topbar { padding: 10px 16px; min-height: 48px; }
+  .topbar-auth-btn { min-height: 44px; }
   .breadcrumb > :not(strong) { display: none; }
   .content { padding: 24px 16px 32px; }
   .page-heading { margin: 0 0 20px; }
   .config-layout, .library-layout, .trace-layout { gap: 16px; }
+  .filters-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters-three > label:first-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 580px) {
-  .form-fields, .filters, .metrics, .trace-index { grid-template-columns: minmax(0, 1fr); }
+  .form-fields, .filters, .filters-three, .metrics, .history-metrics, .trace-index { grid-template-columns: minmax(0, 1fr); }
   .panel-heading, .panel-body, .form-fields, .form-actions, .workflow { padding: 16px; }
   .suite { margin: 0 16px 16px; }
   .config-heading { align-items: flex-start; }
