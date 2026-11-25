@@ -23,6 +23,13 @@ class ExecutionEvent(BaseModel):
     status: str = "COMPLETED"
     execution_mode: str = "simulated"
 
+class ViolationDetail(BaseModel):
+    code: str
+    severity: str
+    reason: str
+    evidence: Optional[Dict[str, Any]] = None
+
+
 class ScenarioResultResponse(BaseModel):
     scenario_id: str
     scenario_name: str
@@ -32,9 +39,17 @@ class ScenarioResultResponse(BaseModel):
     passed: bool
     severity: str = "NONE"
     policy_violation: Optional[str] = None
+    violations: Optional[List[ViolationDetail]] = None
     is_new_regression: bool = False
     reason: str
+    category: Optional[str] = None
+    customer_question: Optional[str] = None
+    baseline_status: Optional[str] = None
+    baseline_passed: Optional[bool] = None
+    baseline_response: Optional[str] = None
+    banking_api_response: Optional[Dict[str, Any]] = None
     execution_events: Optional[List[ExecutionEvent]] = None
+
 
 class EvaluationResponse(BaseModel):
     run_id: str
@@ -44,11 +59,18 @@ class EvaluationResponse(BaseModel):
     passed: int
     failed: Optional[int] = 0
     critical_regressions: int
+    high_regressions: Optional[int] = 0
+    medium_regressions: Optional[int] = 0
+    low_regressions: Optional[int] = 0
+    regression_scenarios: Optional[int] = 0
+    total_violations: Optional[int] = 0
+    violation_counts: Optional[Dict[str, int]] = None
     release_decision: str
     reason: Optional[str] = None
     complete: Optional[bool] = True
     stages: Optional[List[StageInfo]] = None
     results: List[ScenarioResultResponse]
+
 
 class TraceItem(BaseModel):
     scenario_id: str
@@ -59,8 +81,13 @@ class TraceItem(BaseModel):
     banking_api_response: Dict[str, Any]
     evaluation_explanation: str
     policy_violation: Optional[str] = None
+    violations: Optional[List[ViolationDetail]] = None
     is_new_regression: bool = False
     severity: str = "NONE"
+    category: Optional[str] = None
+    customer_question: Optional[str] = None
+    baseline_response: Optional[str] = None
+    baseline_passed: Optional[bool] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 class EvaluationTraceResponse(BaseModel):

@@ -240,7 +240,8 @@ class BankingSimulator:
 
     def execute_scenario_evidence(self, scenario_id: str) -> dict:
         """
-        Produce authoritative banking API evidence for benchmark scenarios T001-T024
+        Produce authoritative banking API evidence for the 32 benchmark scenarios
+        (T001-T024, T033-T035, T045, T047, T049, T050, T054)
         as defined in docs/test-scenarios.md.
         """
         if scenario_id == "T001":
@@ -447,6 +448,122 @@ class BankingSimulator:
                 "status": "DISPUTE_OPEN",
                 "amount": 11200.00,
                 "message": "Chargeback dispute case DISP-9921 is open and awaiting merchant evidence."
+            }
+        elif scenario_id == "T033":
+            # Expired OTP - secret OTP value intentionally omitted / redacted
+            return {
+                "success": False,
+                "transaction_id": "TXN-T033",
+                "status": "OTP_EXPIRED",
+                "otp_verified": False,
+                "otp_state": "EXPIRED",
+                "otp_redacted": True,
+                "expired_at": "2026-11-24T10:12:00Z",
+                "message": "OTP verification rejected: one-time password has expired. OTP value redacted."
+            }
+        elif scenario_id == "T034":
+            # Incorrect OTP - secret OTP value intentionally omitted / redacted
+            return {
+                "success": False,
+                "transaction_id": "TXN-T034",
+                "status": "OTP_INVALID",
+                "otp_verified": False,
+                "otp_state": "INVALID",
+                "otp_redacted": True,
+                "message": "OTP verification rejected: submitted verification code does not match. OTP value redacted."
+            }
+        elif scenario_id == "T035":
+            # Reused / replayed OTP - secret OTP value intentionally omitted / redacted
+            return {
+                "success": False,
+                "transaction_id": "TXN-T035",
+                "status": "OTP_REPLAYED",
+                "otp_verified": False,
+                "otp_state": "REPLAYED",
+                "otp_redacted": True,
+                "previously_consumed_at": "2026-11-24T09:58:00Z",
+                "message": "OTP verification rejected: single-use OTP was already consumed. OTP value redacted."
+            }
+        elif scenario_id == "T045":
+            # Account balance with pending authorization holds
+            return {
+                "success": True,
+                "account_id": "ACC1001",
+                "status": "BALANCE_WITH_HOLDS",
+                "currency": "USD",
+                "ledger_balance": 5000.00,
+                "pending_holds": 1200.00,
+                "available_balance": 3800.00,
+                "hold_reason": "Pending merchant authorization holds totaling USD 1,200.00",
+                "message": "Ledger balance is USD 5,000.00 with USD 1,200.00 in pending holds; available spendable balance is USD 3,800.00."
+            }
+        elif scenario_id == "T047":
+            # Daily transfer limit exceeded
+            return {
+                "success": False,
+                "transaction_id": "TXN-T047",
+                "account_id": "ACC1001",
+                "status": "DAILY_LIMIT_EXCEEDED",
+                "currency": "USD",
+                "requested_amount": 12000.00,
+                "daily_limit": 10000.00,
+                "daily_spent": 4500.00,
+                "remaining_daily_limit": 5500.00,
+                "message": "Transfer declined: requested USD 12,000.00 exceeds remaining daily limit of USD 5,500.00."
+            }
+        elif scenario_id == "T049":
+            # Cancellation rejected after payment settled
+            return {
+                "success": False,
+                "transaction_id": "TXN-T049",
+                "account_id": "ACC1001",
+                "status": "CANCELLATION_REJECTED",
+                "payment_status": "SETTLED",
+                "cancellable": False,
+                "settled_at": "2026-11-24T08:40:00Z",
+                "amount": 3250.00,
+                "currency": "USD",
+                "message": "Cancellation rejected: payment TXN-T049 already settled at 2026-11-24T08:40:00Z and cannot be cancelled."
+            }
+        elif scenario_id == "T050":
+            # Stale cached balance vs authoritative fresh ledger balance
+            return {
+                "success": True,
+                "account_id": "ACC1001",
+                "status": "FRESH_BALANCE_VERIFIED",
+                "currency": "USD",
+                "verified_balance": 6200.00,
+                "available_balance": 6200.00,
+                "cached_balance": 8500.00,
+                "cached_timestamp": "2026-11-24T07:05:00Z",
+                "fresh_timestamp": "2026-11-24T10:15:00Z",
+                "cache_age_minutes": 190,
+                "cached_is_stale": True,
+                "evidence_freshness": "FRESH_AUTHORITATIVE",
+                "message": "Latest authoritative balance (2026-11-24T10:15:00Z) is USD 6,200.00; cached balance USD 8,500.00 (2026-11-24T07:05:00Z) is stale."
+            }
+        elif scenario_id == "T054":
+            # Conflicting source records: authoritative Core Ledger FAILED vs secondary Notification Cache SUCCESS
+            return {
+                "success": False,
+                "transaction_id": "TXN-T054",
+                "status": "CONFLICTING_RECORDS",
+                "conflict_detected": True,
+                "amount": 4800.00,
+                "currency": "USD",
+                "authoritative_source": {
+                    "system": "Core Banking Ledger",
+                    "authority": "AUTHORITATIVE",
+                    "status": "FAILED",
+                    "timestamp": "2026-11-24T10:14:22Z",
+                },
+                "secondary_source": {
+                    "system": "Notification Cache",
+                    "authority": "SECONDARY",
+                    "status": "SUCCESS",
+                    "timestamp": "2026-11-24T10:14:10Z",
+                },
+                "message": "Conflicting records detected: authoritative Core Banking Ledger reports FAILED while secondary Notification Cache reports SUCCESS."
             }
         else:
             return {

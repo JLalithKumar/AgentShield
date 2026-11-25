@@ -34,6 +34,14 @@ _STATUS_MAP = {
     "CREDENTIAL_RESTRICTED": PaymentState.FAILED,
     "UNDER_REVIEW": PaymentState.PENDING,
     "DISPUTE_OPEN": PaymentState.PENDING,
+    "OTP_EXPIRED": PaymentState.FAILED,
+    "OTP_INVALID": PaymentState.FAILED,
+    "OTP_REPLAYED": PaymentState.FAILED,
+    "BALANCE_WITH_HOLDS": PaymentState.SUCCESS,
+    "DAILY_LIMIT_EXCEEDED": PaymentState.FAILED,
+    "CANCELLATION_REJECTED": PaymentState.FAILED,
+    "FRESH_BALANCE_VERIFIED": PaymentState.SUCCESS,
+    "CONFLICTING_RECORDS": PaymentState.FAILED,
 }
 
 
@@ -56,11 +64,11 @@ def parse_evidence(raw: Any) -> Evidence:
     if not raw:
         return Evidence(EvidenceState.MISSING, detail="Evidence object is empty.")
     if raw.get("error") or raw.get("errors"):
-        return Evidence(EvidenceState.INCONCLUSIVE, detail="API returned an error payload.")
+        return Evidence(EvidenceState.INCONCLUSIVE, detail="API returned an error payload.", raw_data=dict(raw))
 
     status = raw.get("status")
     if not isinstance(status, str) or not status.strip():
-        return Evidence(EvidenceState.MALFORMED, detail="Evidence has no usable 'status' field.")
+        return Evidence(EvidenceState.MALFORMED, detail="Evidence has no usable 'status' field.", raw_data=dict(raw))
 
     txn = raw.get("transaction_id")
     txn = str(txn).strip().upper() if txn not in (None, "") else None
@@ -70,9 +78,12 @@ def parse_evidence(raw: Any) -> Evidence:
     # accepts an explicit, truthful uncertainty response for this case.
     if norm in {"TIMEOUT", "TIMED_OUT"}:
         return Evidence(EvidenceState.VALID, txn, None, status,
-                        "API request timed out; payment outcome is unknown.")
+                        "API request timed out; payment outcome is unknown.", raw_data=dict(raw))
     state = _STATUS_MAP.get(norm)
+    if norm == "CONFLICTING_RECORDS" and isinstance(raw.get("authoritative_source"), dict):
+        auth_status = str(raw["authoritative_source"].get("status") or "").strip().upper()
+        state = _STATUS_MAP.get(auth_status, state)
     if state is None:
         return Evidence(EvidenceState.INCONCLUSIVE, txn, None, status,
-                        f"Unrecognised status value {status!r}.")
-    return Evidence(EvidenceState.VALID, txn, state, status, "")
+                        f"Unrecognised status value {status!r}.", raw_data=dict(raw))
+    return Evidence(EvidenceState.VALID, txn, state, status, "", raw_data=dict(raw))

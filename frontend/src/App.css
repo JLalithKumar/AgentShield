@@ -703,6 +703,10 @@ select:disabled {
   gap: 16px;
 }
 
+.metrics-six {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .history-metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -712,6 +716,218 @@ select:disabled {
   background: var(--surface) !important;
   border: 1px solid var(--border);
   border-radius: var(--panel-radius);
+}
+
+.metric-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.metric-warning strong {
+  color: var(--warning-ink) !important;
+}
+
+.candidate-helper-note {
+  margin: 0 24px 14px;
+  padding: 10px 14px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+
+.candidate-helper-note strong {
+  color: var(--text);
+}
+
+.table-row-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary);
+  letter-spacing: 0.03em;
+}
+
+/* Filter Pills & Detected Safety Regressions */
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-secondary);
+}
+
+.trace-rail-filters {
+  padding: 10px 12px;
+}
+
+.filter-pill {
+  height: auto;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-pill:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.filter-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.filter-pill.sev-critical.active {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
+.filter-pill.sev-high.active {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #1e293b;
+}
+
+.filter-pill.sev-pass.active {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.regressions-list {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px;
+}
+
+.regression-card {
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--danger);
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  display: grid;
+  gap: 12px;
+}
+
+.regression-card.regression-sev-warning {
+  border-left-color: var(--warning);
+}
+
+.regression-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.regression-card-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.regression-card-identity strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.severity-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.severity-indicator.sev-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid #fecaca;
+}
+
+.severity-indicator.sev-warning {
+  background: var(--warning-soft);
+  color: var(--warning-ink);
+  border: 1px solid #fde68a;
+}
+
+.regression-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.regression-meta-grid small {
+  display: block;
+  font-size: 11px;
+  color: var(--secondary);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.regression-status-shift,
+.regression-violation-code,
+.regression-claim-diff {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.regression-violation-code code {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.claim-mismatch {
+  color: var(--danger);
+}
+
+.regression-summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.regression-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.regression-inspect-btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
 }
 
 .metric-label {
@@ -932,7 +1148,8 @@ blockquote {
   .workflow ol { flex-flow: row wrap; gap: 16px; }
   .workflow ol li { flex: 1 1 140px; padding: 0; }
   .workflow li::before { display: none; }
-  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics, .metrics-six { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .regression-meta-grid { grid-template-columns: minmax(0, 1fr); }
   .history-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .trace-layout { grid-template-columns: minmax(0, 1fr); }
   .trace-index { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -960,15 +1177,18 @@ blockquote {
 }
 
 @media (max-width: 580px) {
-  .form-fields, .filters, .filters-three, .metrics, .history-metrics, .trace-index { grid-template-columns: minmax(0, 1fr); }
+  .form-fields, .filters, .filters-three, .metrics, .metrics-six, .history-metrics, .trace-index { grid-template-columns: minmax(0, 1fr); }
   .panel-heading, .panel-body, .form-fields, .form-actions, .workflow { padding: 16px; }
+  .filter-pills, .regressions-list { padding: 14px 16px; }
+  .candidate-helper-note { margin: 0 16px 12px; }
   .suite { margin: 0 16px 16px; }
   .config-heading { align-items: flex-start; }
   .form-actions button { flex: 1 1 180px; }
   .workflow ol { display: grid; gap: 12px; }
   .section-title { margin-top: 24px; }
-  .metric { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .metric strong { margin: 0; }
+  .metric { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; }
+  .metric strong { margin: 0; white-space: nowrap; overflow-wrap: normal; justify-self: end; }
+  .metric-hint { grid-column: 1 / -1; margin-top: 2px; }
   .empty-state { padding: 24px 16px; }
   .topbar { gap: 8px; }
   .environment { flex-wrap: wrap; }
