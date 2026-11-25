@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import Icon from './Icon';
 import './homepage.css';
 
@@ -142,7 +142,10 @@ export default function Homepage({
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef(null);
   const userMenuRef = useRef(null);
+  const avatarBtnRef = useRef(null);
+  const mobileToggleRef = useRef(null);
 
   // Close user dropdown menu on click outside or Escape key
   useEffect(() => {
@@ -154,6 +157,7 @@ export default function Homepage({
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         setUserMenuOpen(false);
+        avatarBtnRef.current?.focus();
       }
     }
     if (userMenuOpen) {
@@ -166,10 +170,34 @@ export default function Homepage({
     };
   }, [userMenuOpen]);
 
+  // Close mobile drawer on click outside or Escape key and restore focus
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+        mobileToggleRef.current?.focus();
+      }
+    }
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="stitch-page">
       {/* SECTION A — STICKY ENTERPRISE NAVIGATION */}
-      <header className="stitch-header" role="banner">
+      <header className="stitch-header" role="banner" ref={headerRef}>
         <div className="stitch-header-inner">
           {/* Brand Logo & Wordmark (Left) */}
           <div
@@ -177,7 +205,12 @@ export default function Homepage({
             tabIndex={0}
             role="link"
             onClick={onOpenConsole}
-            onKeyDown={e => e.key === 'Enter' && onOpenConsole()}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenConsole();
+              }
+            }}
           >
             <span className="stitch-brand-icon" aria-hidden="true">
               <Icon name="shield" size={22} />
@@ -212,65 +245,66 @@ export default function Homepage({
                   onClick={onOpenConsole}
                   aria-label="Launch Engine"
                 >
-                  <Icon name="bolt" size={14} />
+                  <Icon name="play" size={13} />
                   <span>Launch Engine</span>
                 </button>
 
                 {/* Accessible User Avatar Dropdown */}
                 <div className="stitch-dropdown-container">
                   <button
+                    ref={avatarBtnRef}
                     type="button"
                     className="stitch-avatar-btn"
                     aria-label={`User account menu for ${user.full_name || user.email}`}
                     aria-haspopup="menu"
                     aria-expanded={userMenuOpen}
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    onClick={() => setUserMenuOpen(prev => !prev)}
                   >
                     <span className="stitch-user-avatar" aria-hidden="true">
                       {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
                     </span>
                     <span className="stitch-avatar-name">{user.full_name || 'User'}</span>
-                    <Icon name="chevron" size={13} className={`stitch-avatar-chevron ${userMenuOpen ? 'open' : ''}`} />
+                    <span className={`stitch-avatar-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden="true">
+                      <Icon name="chevron" size={13} />
+                    </span>
                   </button>
 
-                  {userMenuOpen && (
-                    <div className="stitch-account-dropdown" role="menu" aria-label="Account options">
-                      <div className="stitch-dropdown-user-info">
-                        <div className="stitch-dropdown-avatar" aria-hidden="true">
-                          {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        <div className="stitch-dropdown-meta">
-                          <strong className="stitch-dropdown-name">{user.full_name || 'AgentShield User'}</strong>
-                          <small className="stitch-dropdown-email">{user.email}</small>
-                        </div>
-                      </div>
-                      <div className="stitch-dropdown-divider" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="stitch-dropdown-item primary"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onOpenConsole();
-                        }}
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        className="stitch-account-dropdown"
+                        role="menu"
+                        aria-label="Account options"
+                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                       >
-                        <Icon name="bolt" size={14} />
-                        <span>Go to Dashboard</span>
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="stitch-dropdown-item danger"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          onSignOut();
-                        }}
-                      >
-                        <Icon name="arrow" size={14} style={{ transform: 'rotate(180deg)' }} />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  )}
+                        <div className="stitch-dropdown-user-info">
+                          <div className="stitch-dropdown-avatar" aria-hidden="true">
+                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          <div className="stitch-dropdown-meta">
+                            <strong className="stitch-dropdown-name">{user.full_name || 'AgentShield User'}</strong>
+                            <small className="stitch-dropdown-email">{user.email}</small>
+                          </div>
+                        </div>
+                        <div className="stitch-dropdown-divider" role="separator" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="stitch-dropdown-item danger"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            onSignOut();
+                          }}
+                        >
+                          <Icon name="logout" size={15} />
+                          <span>Sign Out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             ) : (
@@ -294,11 +328,13 @@ export default function Homepage({
 
             {/* Accessible Mobile Hamburger Toggle */}
             <button
+              ref={mobileToggleRef}
               type="button"
               className="stitch-mobile-toggle"
               aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
               aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-controls="stitch-mobile-drawer"
+              onClick={() => setMobileMenuOpen(prev => !prev)}
             >
               <Icon name={mobileMenuOpen ? 'close' : 'menu'} size={22} />
             </button>
@@ -306,95 +342,109 @@ export default function Homepage({
         </div>
 
         {/* Accessible Mobile Drawer */}
-        {mobileMenuOpen && (
-          <div className="stitch-mobile-drawer" role="navigation" aria-label="Mobile Navigation">
-            <a
-              href="#"
-              className="stitch-drawer-link"
-              onClick={e => {
-                e.preventDefault();
-                setMobileMenuOpen(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              id="stitch-mobile-drawer"
+              className="stitch-mobile-drawer"
+              role="navigation"
+              aria-label="Mobile Navigation"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              Home
-            </a>
-            <a
-              href="#how-it-works"
-              className="stitch-drawer-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              How It Works
-            </a>
-            <a
-              href="#security"
-              className="stitch-drawer-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Security
-            </a>
-
-            <div className="stitch-mobile-auth">
-              <button
-                type="button"
-                className="stitch-btn-primary w-full"
-                onClick={() => {
+              <a
+                href="#"
+                className="stitch-drawer-link"
+                onClick={e => {
+                  e.preventDefault();
                   setMobileMenuOpen(false);
-                  onOpenConsole();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                Launch Evaluation Engine
-              </button>
+                Home
+              </a>
+              <a
+                href="#how-it-works"
+                className="stitch-drawer-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                How It Works
+              </a>
+              <a
+                href="#security"
+                className="stitch-drawer-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Security
+              </a>
 
-              {user ? (
-                <div className="stitch-mobile-user-card">
-                  <div className="stitch-dropdown-user-info">
-                    <div className="stitch-dropdown-avatar" aria-hidden="true">
-                      {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+              <div className="stitch-mobile-auth">
+                <button
+                  type="button"
+                  className="stitch-btn-primary stitch-mobile-launch-btn w-full"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenConsole();
+                  }}
+                >
+                  <Icon name="play" size={15} />
+                  <span>Launch Evaluation Engine</span>
+                </button>
+
+                {user ? (
+                  <div className="stitch-mobile-user-card">
+                    <div className="stitch-dropdown-user-info">
+                      <div className="stitch-dropdown-avatar" aria-hidden="true">
+                        {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="stitch-dropdown-meta">
+                        <strong className="stitch-dropdown-name">{user.full_name || 'AgentShield User'}</strong>
+                        <small className="stitch-dropdown-email">{user.email}</small>
+                      </div>
                     </div>
-                    <div className="stitch-dropdown-meta">
-                      <strong className="stitch-dropdown-name">{user.full_name}</strong>
-                      <small className="stitch-dropdown-email">{user.email}</small>
-                    </div>
+                    <div className="stitch-dropdown-divider" role="separator" />
+                    <button
+                      type="button"
+                      className="stitch-dropdown-item danger w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onSignOut();
+                      }}
+                    >
+                      <Icon name="logout" size={15} />
+                      <span>Sign Out</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="stitch-btn-ghost w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onSignOut();
-                    }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="stitch-mobile-guest-btns">
-                  <button
-                    type="button"
-                    className="stitch-btn-ghost w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenSignIn();
-                    }}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    type="button"
-                    className="stitch-btn-gradient w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenSignUp();
-                    }}
-                  >
-                    Get Started
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+                ) : (
+                  <div className="stitch-mobile-guest-btns">
+                    <button
+                      type="button"
+                      className="stitch-btn-ghost stitch-mobile-auth-btn w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenSignIn();
+                      }}
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      type="button"
+                      className="stitch-btn-gradient stitch-mobile-auth-btn w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenSignUp();
+                      }}
+                    >
+                      Get Started
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="stitch-main">
@@ -1064,5 +1114,6 @@ export default function Homepage({
         </div>
       </footer>
     </div>
+    </MotionConfig>
   );
 }

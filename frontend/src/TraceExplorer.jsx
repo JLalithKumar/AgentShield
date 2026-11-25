@@ -127,7 +127,7 @@ export default function TraceExplorer({ run, source, selected, onSelect, onPrevi
       <section className="panel"><header className="panel-heading"><h2>Run scenarios</h2><Badge>{run.results.length}</Badge></header>
         <div className="trace-index">{run.results.map(row => <button key={row.scenario_id} onClick={() => onSelect(row.scenario_id)}
           aria-pressed={selected?.scenario_id === row.scenario_id}>
-          <span><small>{row.scenario_id}</small><strong>{row.scenario_name || 'Name not reported'}</strong></span><Badge>{verdict(row)}</Badge>
+          <span className="trace-index-label"><small>{row.scenario_id}</small><strong>{row.scenario_name || 'Name not reported'}</strong></span><Badge>{verdict(row)}</Badge>
         </button>)}</div>
       </section>
       <div className="stack">
