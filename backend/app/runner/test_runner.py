@@ -22,7 +22,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from backend.app.runner.loader import load_scenarios
+from backend.app.runner.loader import load_scenarios, sort_scenarios
 from backend.app.banking.simulator import banking_simulator
 
 from backend.app.integrations.agent_runtime import generate_response
@@ -152,6 +152,12 @@ def run_evaluation(
                 evidence,
                 candidate_output,
             )
+            c_eval["category"] = scenario.get("category")
+            c_eval["customer_question"] = scenario.get("customer_question")
+            c_eval["baseline_passed"] = bool(b_eval.get("passed"))
+            c_eval["baseline_status"] = "PASSED" if b_eval.get("passed") else "FAILED"
+            c_eval["baseline_response"] = baseline_output.get("response", "")
+            c_eval["banking_api_response"] = evidence
 
             candidate_evaluations.append(c_eval)
 
@@ -265,22 +271,32 @@ def run_evaluation(
                 "banking_request": json.dumps({
                     "scenario_id": s_id,
                     "category": scenario.get("category"),
+                    "customer_question": scenario.get("customer_question"),
                 }),
                 "banking_response": json.dumps(evidence),
                 "agent_input": json.dumps({
                     "version": candidate,
+                    "baseline_version": baseline,
                     "scenario": scenario,
                 }),
-                "agent_output": json.dumps(candidate_output),
+                "agent_output": json.dumps({
+                    **candidate_output,
+                    "baseline_response": baseline_output.get("response", ""),
+                    "baseline_passed": bool(b_eval.get("passed")),
+                    "baseline_status": "PASSED" if b_eval.get("passed") else "FAILED",
+                    "violations": c_eval.get("violations") or [],
+                }),
             })
 
         # --------------------------------------------------
         # 6. Compare baseline and candidate results
         # --------------------------------------------------
 
-        compared_results = compare_versions(
-            baseline_evaluations,
-            candidate_evaluations,
+        compared_results = sort_scenarios(
+            compare_versions(
+                baseline_evaluations,
+                candidate_evaluations,
+            )
         )
 
         # Append comparison and release gate events (events 8 & 9)
@@ -318,14 +334,37 @@ def run_evaluation(
 
         failed = total_tests - passed
 
+        regressed = [
+            result for result in compared_results if result.get("is_new_regression") is True
+        ]
+        regression_scenarios = len(regressed)
+
         critical_regressions = sum(
-            1
-            for result in compared_results
-            if (
-                result.get("is_new_regression") is True
-                and result.get("severity") == "CRITICAL"
-            )
+            1 for result in regressed if result.get("severity") == "CRITICAL"
         )
+        high_regressions = sum(
+            1 for result in regressed if result.get("severity") == "HIGH"
+        )
+        medium_regressions = sum(
+            1 for result in regressed if result.get("severity") == "MEDIUM"
+        )
+        low_regressions = sum(
+            1 for result in regressed if result.get("severity") == "LOW"
+        )
+
+        violation_counts: Dict[str, int] = {}
+        for result in compared_results:
+            if result.get("passed") is True:
+                continue
+            row_violations = result.get("violations") or []
+            if row_violations:
+                for v in row_violations:
+                    code = str(v.get("code") or "UNCLASSIFIED_VIOLATION")
+                    violation_counts[code] = violation_counts.get(code, 0) + 1
+            elif result.get("policy_violation"):
+                code = str(result["policy_violation"])
+                violation_counts[code] = violation_counts.get(code, 0) + 1
+        total_violations = sum(violation_counts.values())
 
         # --------------------------------------------------
         # Validate mandatory scenario coverage
@@ -352,12 +391,14 @@ def run_evaluation(
         )
 
         logger.info(
-            "Evaluation metrics | Total: %s | Passed: %s | "
-            "Failed: %s | Critical regressions: %s | Complete: %s",
+            "Evaluation metrics | Total: %s | Passed: %s | Failed: %s | "
+            "Critical: %s | High: %s | Violations: %s | Complete: %s",
             total_tests,
             passed,
             failed,
             critical_regressions,
+            high_regressions,
+            total_violations,
             complete,
         )
 
@@ -373,6 +414,12 @@ def run_evaluation(
             "passed": passed,
             "failed": failed,
             "critical_regressions": critical_regressions,
+            "high_regressions": high_regressions,
+            "medium_regressions": medium_regressions,
+            "low_regressions": low_regressions,
+            "regression_scenarios": regression_scenarios,
+            "total_violations": total_violations,
+            "violation_counts": violation_counts,
             "complete": complete,
             "results": compared_results,
         }
@@ -402,21 +449,29 @@ def run_evaluation(
                 "timestamp": datetime.now().isoformat(),
                 "details": {
                     "release_decision": release_decision,
-                    "blocks_release": res.get("severity") == "CRITICAL" and res.get("is_new_regression", False),
+                    "blocks_release": res.get("passed") is False,
                     "reason": summary["reason"],
                 },
                 "status": "COMPLETED",
                 "execution_mode": "simulated",
             })
 
+        category_count = len({s.get("category") for s in scenarios if s.get("category")})
+        if regression_scenarios == 0:
+            stage4_desc = f"Compared against {baseline}: 0 regressions across {total_tests} scenarios"
+        elif regression_scenarios == 1:
+            stage4_desc = f"Detected 1 regression ({critical_regressions} critical, {high_regressions} high severity)"
+        else:
+            stage4_desc = f"Detected {regression_scenarios} regressions ({critical_regressions} critical, {high_regressions} high severity)"
+
         # Structured 5-stage workflow status
         summary["stages"] = [
             {
                 "stage_id": 1,
                 "name": "Test Scenarios",
-                "description": f"Loaded {total_tests} fixed banking benchmark cases across 12 categories",
+                "description": f"Loaded {total_tests} naturally ordered banking benchmark cases across {category_count} categories",
                 "status": "COMPLETED",
-                "details": {"total_scenarios": total_tests},
+                "details": {"total_scenarios": total_tests, "categories": category_count},
             },
             {
                 "stage_id": 2,
@@ -430,19 +485,24 @@ def run_evaluation(
                 "name": "Evidence Validation",
                 "description": "Validated agent claims against authoritative banking tool outputs",
                 "status": "COMPLETED",
-                "details": {"verified_count": total_tests},
+                "details": {"verified_count": total_tests, "total_violations": total_violations},
             },
             {
                 "stage_id": 4,
                 "name": "Version Comparison",
-                "description": f"Identified {critical_regressions} critical regressions and {failed} failures",
-                "status": "COMPLETED" if critical_regressions == 0 else "WARNING",
-                "details": {"critical_regressions": critical_regressions, "failed": failed},
+                "description": stage4_desc,
+                "status": "COMPLETED" if failed == 0 else "WARNING",
+                "details": {
+                    "critical_regressions": critical_regressions,
+                    "high_regressions": high_regressions,
+                    "regression_scenarios": regression_scenarios,
+                    "failed": failed,
+                },
             },
             {
                 "stage_id": 5,
                 "name": "Release Gate",
-                "description": f"Independent release gate decision: {release_decision}",
+                "description": f"Independent release gate policy decision: {release_decision}",
                 "status": "ALLOWED" if release_decision in {"ALLOWED", "ALLOW"} else "BLOCKED",
                 "details": {"decision": release_decision, "reason": summary["reason"]},
             },

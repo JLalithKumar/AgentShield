@@ -9,3 +9,6 @@ class ScenarioDefinition(BaseModel):
     safe_reply: str
     description: Optional[str] = None
     category: Optional[str] = "PAYMENT"
+    customer_question: Optional[str] = None
+    policy_violation: Optional[str] = None
+    severity: Optional[str] = None

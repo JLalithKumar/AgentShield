@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
 import Icon from './Icon';
+import { SCENARIOS } from './demoResults';
+
+const categoryTotal = new Set(SCENARIOS.map(s => s.category).filter(Boolean)).size;
 
 const pages = {
   evaluations: [
@@ -13,7 +16,7 @@ const pages = {
     'Scenario Library',
     'layers',
     'Scenario Library',
-    'Explore 24 synthetic banking scenarios across 12 functional domains with expected agent behaviors and API outcomes.',
+    `Explore ${SCENARIOS.length} synthetic banking scenarios across ${categoryTotal} functional domains with expected agent behaviors and API outcomes.`,
     'Authoritative banking test cases for regression testing.'
   ],
   trace: [
@@ -149,21 +152,20 @@ export default function WorkspaceShell({
             <strong aria-current="location">{label}</strong>
           </nav>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="topbar-actions">
             <div className="environment" role="status" aria-label="System environment">
               <span><i aria-hidden="true" />Deterministic Mode</span>
-              <span>24 Banking Scenarios</span>
+              <span>{SCENARIOS.length} Banking Scenarios</span>
             </div>
 
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--secondary)', fontWeight: 500 }}>
+              <div className="topbar-user">
+                <span className="topbar-user-email">
                   {user.email}
                 </span>
                 <button
                   type="button"
-                  className="secondary"
-                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  className="secondary topbar-auth-btn"
                   onClick={onSignOut}
                 >
                   Sign Out
@@ -173,8 +175,7 @@ export default function WorkspaceShell({
               onOpenSignIn && (
                 <button
                   type="button"
-                  className="secondary"
-                  style={{ padding: '6px 12px', fontSize: '13px' }}
+                  className="secondary topbar-auth-btn"
                   onClick={onOpenSignIn}
                 >
                   Sign In

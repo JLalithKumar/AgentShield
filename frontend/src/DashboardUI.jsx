@@ -23,7 +23,7 @@ export function RunInfo({ run, source }) {
   );
 }
 
-export function Metric({ label, value, icon, tone = 'neutral' }) {
+export function Metric({ label, value, icon, tone = 'neutral', hint = null }) {
   return (
     <div className={`panel metric metric-${tone}`} role="region" aria-label={`${label}: ${value ?? 'Unknown'}`}>
       <span className="metric-label">
@@ -31,6 +31,7 @@ export function Metric({ label, value, icon, tone = 'neutral' }) {
         {label}
       </span>
       <strong>{value ?? 'Unknown'}</strong>
+      {hint && <span className="metric-hint">{hint}</span>}
     </div>
   );
 }
@@ -96,6 +97,9 @@ export function ScenarioTable({ rows, selectedId, onSelect, results = false }) {
                 </td>
                 <td>
                   <strong>{row.scenario_name || 'Name not reported'}</strong>
+                  {results && row.category && (
+                    <span className="table-row-meta">{row.category}</span>
+                  )}
                 </td>
                 <td>
                   <Badge tone={row.tool_status === 'FAILED' ? 'danger' : 'neutral'}>

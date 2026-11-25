@@ -79,8 +79,115 @@
   font-size: 12px;
 }
 
+.evidence-callout {
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+}
+
+.evidence-callout.warning {
+  background: var(--warning-soft);
+  border-color: #fde68a;
+}
+
+.evidence-callout h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.callout-grid-three,
+.callout-grid-two {
+  display: grid;
+  gap: 12px;
+}
+
+.callout-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.callout-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.callout-grid-three small,
+.callout-grid-two small {
+  display: block;
+  font-size: 11px;
+  color: var(--secondary);
+  margin-bottom: 4px;
+}
+
+.callout-grid-three strong,
+.callout-grid-two strong {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.callout-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+
+.violations-breakdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.violation-breakdown-item {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+}
+
+.violation-breakdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.violation-breakdown-head code {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.violation-breakdown-item p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
+
+.regression-warning-card {
+  background: var(--warning-soft) !important;
+  border-color: #fde68a !important;
+  border-left-color: var(--warning) !important;
+}
+
+.regression-warning-card .critical-regression-title,
+.regression-warning-card .critical-regression-title h3,
+.regression-warning-card .critical-label,
+.regression-warning-card .critical-policy-code,
+.regression-warning-card .critical-regression-footer {
+  color: var(--warning-ink) !important;
+}
+
+.regression-warning-card .critical-regression-header {
+  border-bottom-color: #fde68a;
+}
+
 @media (max-width: 580px) {
-  .evidence-pair, .policy-details, .assessment-foot {
+  .evidence-pair, .policy-details, .assessment-foot, .callout-grid-three, .callout-grid-two {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -212,6 +319,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   border-bottom: 1px solid #FCA5A5;
   padding-bottom: 12px;
@@ -341,8 +449,9 @@
 
 @media (max-width: 580px) {
   .critical-regression-table th {
-    width: 42%;
+    width: 38%;
     padding: 8px 10px;
+    white-space: normal;
   }
   .critical-regression-table td {
     padding: 8px 10px;
@@ -403,6 +512,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
 }

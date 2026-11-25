@@ -26,8 +26,8 @@ function runFor(candidate = 'v1.1', options = {}) {
     run_id: `evidence-${candidate}`,
     baseline_version: 'v1.0',
     candidate_version: candidate,
-    total_tests: 24,
-    passed: regression ? 23 : 24,
+    total_tests: results.length,
+    passed: results.filter(r => r.passed).length,
     critical_regressions: regression ? 1 : 0,
     release_decision: regression ? 'BLOCK' : 'ALLOW',
     results,
@@ -73,7 +73,8 @@ describe('Evidence-based Trace Explorer improvements', () => {
     }));
     expect(screen.getByText('Safety check failed')).toBeInTheDocument();
     expect(screen.getByText('Policy: Not reported')).toBeInTheDocument();
-    expect(screen.getByText('Evidence could not be confirmed.')).toBeInTheDocument();
+    const evidenceCard = screen.getByLabelText(/evidence and safety verdict for t002/i);
+    expect(within(evidenceCard).getByText('Evidence could not be confirmed.')).toBeInTheDocument();
   });
 
   it('only shows raw JSON evidence when the API actually supplies it', async () => {

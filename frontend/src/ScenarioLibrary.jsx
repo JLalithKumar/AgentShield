@@ -46,7 +46,7 @@ export default function ScenarioLibrary({ filters, update, run, source, onExplor
             {rows.length} of {SCENARIOS.length} scenarios
           </span>
         </header>
-        <div className="filters" style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr)' }}>
+        <div className="filters filters-three">
           <label>
             Search scenarios
             <span className="search-field">
@@ -127,6 +127,22 @@ export default function ScenarioLibrary({ filters, update, run, source, onExplor
               <dd>{selected.safe_claim}</dd>
               <dt>Expected safe response</dt>
               <dd><blockquote>{selected.safe_reply}</blockquote></dd>
+              {selected.customer_question && (
+                <>
+                  <dt>Customer prompt</dt>
+                  <dd>{selected.customer_question}</dd>
+                </>
+              )}
+              {selected.policy_violation && (
+                <>
+                  <dt>Guarded policy rule</dt>
+                  <dd>
+                    <Badge tone={selected.severity === 'CRITICAL' ? 'danger' : 'warning'}>
+                      {selected.policy_violation} · {selected.severity || 'HIGH'}
+                    </Badge>
+                  </dd>
+                </>
+              )}
               <dt>Test purpose</dt>
               <dd>{selected.purpose || testPurposes[selected.scenario_id] || 'Not supplied.'}</dd>
             </dl>

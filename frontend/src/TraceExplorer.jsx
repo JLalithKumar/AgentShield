@@ -1,28 +1,35 @@
+import { useState } from 'react';
 import Icon from './Icon';
 import { Badge, EmptyState, RunInfo } from './DashboardUI';
 import EvidencePanel from './EvidencePanel';
-import { verdict } from './runDisplay';
+import { severityTone, verdict } from './runDisplay';
 
-function CriticalRegressionAlert({ row, run }) {
-  if (!row?.is_new_regression) return null;
-  const isCritical = row.severity === 'CRITICAL';
+function CriticalRegressionAlert({ row }) {
+  if (!row?.is_new_regression && row?.passed !== false) return null;
+  const sev = String(row.severity || 'HIGH').toUpperCase();
+  const isCritical = sev === 'CRITICAL';
+  const tone = severityTone(sev);
   const headerTitle = isCritical
     ? `Critical Safety Regression — ${row.scenario_id}`
-    : `Safety Policy Regression — ${row.scenario_id}`;
+    : `${sev === 'HIGH' ? 'High-Severity' : 'Moderate'} Safety Regression — ${row.scenario_id}`;
 
   const explanation = row.reason || `The agent reported ${row.agent_claim} while the authoritative banking API returned ${row.tool_status}.`;
   const decisionText = isCritical
-    ? 'Release blocked due to a critical safety regression.'
-    : 'Automated release gate flagged this regression for review.';
+    ? 'Release gate recommends blocking promotion due to a critical safety regression.'
+    : 'Release gate flagged this safety policy regression as a release blocker.';
+  const violations = Array.isArray(row.violations) ? row.violations : [];
 
   return (
-    <section className="critical-regression-card" aria-label="Critical safety regression details">
+    <section
+      className={`critical-regression-card ${isCritical ? '' : 'regression-warning-card'}`}
+      aria-label="Safety regression details"
+    >
       <header className="critical-regression-header">
         <div className="critical-regression-title">
-          <Icon name="alert" size={20} />
+          <Icon name={isCritical ? 'alert' : 'shield'} size={20} />
           <h3>{headerTitle}</h3>
         </div>
-        <Badge tone="danger">{row.severity || 'CRITICAL'}</Badge>
+        <Badge tone={tone}>{sev}</Badge>
       </header>
 
       <div className="critical-regression-table-wrap">
@@ -30,7 +37,14 @@ function CriticalRegressionAlert({ row, run }) {
           <tbody>
             <tr>
               <th scope="row">Scenario</th>
-              <td>{row.scenario_name || 'Name not reported'}</td>
+              <td>
+                {row.scenario_name || 'Name not reported'}
+                {row.category ? ` (${row.category})` : ''}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Baseline Status</th>
+              <td><Badge tone={row.baseline_passed === false ? 'danger' : 'success'}>{row.baseline_status || 'PASSED'}</Badge></td>
             </tr>
             <tr>
               <th scope="row">Banking API Status</th>
@@ -41,12 +55,22 @@ function CriticalRegressionAlert({ row, run }) {
               <td><span className="critical-field-val status-claim">{row.agent_claim || 'Unknown'}</span></td>
             </tr>
             <tr>
-              <th scope="row">Policy Violation</th>
-              <td><span className="critical-policy-code">{row.policy_violation || 'Unclassified'}</span></td>
+              <th scope="row">Policy Violation{violations.length > 1 ? 's' : ''}</th>
+              <td>
+                {violations.length > 1 ? (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {violations.map((v, i) => (
+                      <span key={`${v.code}-${i}`} className="critical-policy-code">{v.code}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="critical-policy-code">{row.policy_violation || 'Unclassified'}</span>
+                )}
+              </td>
             </tr>
             <tr>
               <th scope="row">Severity</th>
-              <td><Badge tone="danger">{row.severity || 'CRITICAL'}</Badge></td>
+              <td><Badge tone={tone}>{sev}</Badge></td>
             </tr>
           </tbody>
         </table>
@@ -69,16 +93,17 @@ function CriticalRegressionAlert({ row, run }) {
 
 function ExecutionTimeline({ events, row }) {
   if (!row) return null;
+  const sev = String(row.severity || 'HIGH').toUpperCase();
   const defaultEvents = [
     { sequence_number: 1, event_type: 'SCENARIO_LOADED', title: 'Scenario Loaded', details: { scenario: `${row.scenario_id}: ${row.scenario_name}` }, execution_mode: 'simulated' },
     { sequence_number: 2, event_type: 'AGENT_SELECTED', title: 'Agent Version Selected', details: { versions: 'Baseline v1.0 vs Candidate' }, execution_mode: 'simulated' },
     { sequence_number: 3, event_type: 'INPUT_SUPPLIED', title: 'Customer Question Delivered', details: { question: row.customer_question || 'Banking scenario request delivered to agent runtime' }, execution_mode: 'simulated' },
     { sequence_number: 4, event_type: 'BANKING_EVIDENCE_RECEIVED', title: 'Banking Tool Evidence Received', details: { status: `Authoritative API Status: ${row.tool_status}` }, execution_mode: 'simulated' },
     { sequence_number: 5, event_type: 'AGENT_RESPONSE_GENERATED', title: 'Agent Response Generated', details: { claim: `Extracted claim: ${row.agent_claim}` }, execution_mode: 'simulated' },
-    { sequence_number: 6, event_type: 'EVIDENCE_VALIDATED', title: 'Evidence Validated Against Claim', details: { status: row.passed ? 'Agent claim matches authoritative banking evidence' : 'Contradiction detected: agent claim conflicts with tool evidence' }, execution_mode: 'simulated' },
-    { sequence_number: 7, event_type: 'SAFETY_VERDICT_DETERMINED', title: 'Safety Verdict Determined', details: { verdict: row.passed ? 'PASSED: No safety violations detected' : `FAILED: ${row.policy_violation || 'Violation detected'} (${row.severity})` }, execution_mode: 'simulated' },
-    { sequence_number: 8, event_type: 'VERSION_COMPARISON_COMPLETED', title: 'Version Comparison Completed', details: { comparison: row.is_new_regression ? 'CRITICAL REGRESSION: Candidate degraded compared to baseline' : 'Consistent with baseline' }, execution_mode: 'simulated' },
-    { sequence_number: 9, event_type: 'RELEASE_GATE_ASSESSED', title: 'Release Gate Assessed', details: { gate: row.is_new_regression ? 'BLOCK: Critical regression prevents automated release' : 'ELIGIBLE: No critical regressions flagged' }, execution_mode: 'simulated' },
+    { sequence_number: 6, event_type: 'EVIDENCE_VALIDATED', title: 'Evidence Validated Against Claim', details: { status: row.passed ? 'Agent claim matches authoritative banking evidence' : 'Contradiction detected: agent output violates evidence policy' }, execution_mode: 'simulated' },
+    { sequence_number: 7, event_type: 'SAFETY_VERDICT_DETERMINED', title: 'Safety Verdict Determined', details: { verdict: row.passed ? 'PASSED: No safety violations detected' : `FAILED: ${row.policy_violation || 'Violation detected'} (${sev})` }, execution_mode: 'simulated' },
+    { sequence_number: 8, event_type: 'VERSION_COMPARISON_COMPLETED', title: 'Version Comparison Completed', details: { comparison: row.is_new_regression ? `${sev} REGRESSION: Candidate degraded compared to baseline` : 'Consistent with baseline' }, execution_mode: 'simulated' },
+    { sequence_number: 9, event_type: 'RELEASE_GATE_ASSESSED', title: 'Release Gate Assessed', details: { gate: row.is_new_regression ? `BLOCKED: ${sev} regression prevents release promotion` : 'ELIGIBLE: No regressions flagged on this scenario' }, execution_mode: 'simulated' },
   ];
   const list = (events && events.length) ? events : defaultEvents;
 
@@ -117,17 +142,50 @@ function ExecutionTimeline({ events, row }) {
 }
 
 export default function TraceExplorer({ run, source, selected, onSelect, onPreview, loading }) {
+  const [onlyFailed, setOnlyFailed] = useState(false);
+
   if (!run) return <section className="panel"><EmptyState icon="activity" title="No evaluation trace yet"
     action={<button className="secondary" disabled={loading} onClick={onPreview}>Load demo trace</button>}>
     Run an evaluation or preview a synthetic trace to inspect scenario evidence.
   </EmptyState></section>;
 
+  const failedCount = run.results.filter(r => r.passed === false).length;
+  const visibleIndexRows = onlyFailed ? run.results.filter(r => r.passed === false) : run.results;
+
   return <div className="stack"><RunInfo source={source} run={run} />
     <div className="trace-layout">
-      <section className="panel"><header className="panel-heading"><h2>Run scenarios</h2><Badge>{run.results.length}</Badge></header>
-        <div className="trace-index">{run.results.map(row => <button key={row.scenario_id} onClick={() => onSelect(row.scenario_id)}
+      <section className="panel">
+        <header className="panel-heading">
+          <h2>Run scenarios</h2>
+          <Badge>{visibleIndexRows.length}</Badge>
+        </header>
+        {failedCount > 0 && (
+          <div className="filter-pills trace-rail-filters" role="group" aria-label="Filter trace scenarios">
+            <button
+              type="button"
+              className={`filter-pill ${!onlyFailed ? 'active' : ''}`}
+              aria-pressed={!onlyFailed}
+              onClick={() => setOnlyFailed(false)}
+            >
+              All ({run.results.length})
+            </button>
+            <button
+              type="button"
+              className={`filter-pill sev-critical ${onlyFailed ? 'active' : ''}`}
+              aria-pressed={onlyFailed}
+              onClick={() => setOnlyFailed(true)}
+            >
+              Regressions ({failedCount})
+            </button>
+          </div>
+        )}
+        <div className="trace-index">{visibleIndexRows.map(row => <button key={row.scenario_id} onClick={() => onSelect(row.scenario_id)}
           aria-pressed={selected?.scenario_id === row.scenario_id}>
-          <span><small>{row.scenario_id}</small><strong>{row.scenario_name || 'Name not reported'}</strong></span><Badge>{verdict(row)}</Badge>
+          <span className="trace-index-label">
+            <small>{row.scenario_id}{row.category ? ` · ${row.category}` : ''}</small>
+            <strong>{row.scenario_name || 'Name not reported'}</strong>
+          </span>
+          <Badge tone={row.passed ? 'success' : severityTone(row.severity)}>{verdict(row)}</Badge>
         </button>)}</div>
       </section>
       <div className="stack">

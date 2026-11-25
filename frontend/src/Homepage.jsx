@@ -1,6 +1,135 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import Icon from './Icon';
 import './homepage.css';
+
+/**
+ * Conceptual Architecture Graphic for AgentShield.
+ * Replaces the static evaluation preview with a modern, high-craft,
+ * responsive SVG/CSS representation of AgentShield's change-control engine.
+ */
+function ConceptualEngineGraphic() {
+  return (
+    <div className="stitch-conceptual-container" role="region" aria-label="AgentShield Safety Engine Architecture">
+      <div className="stitch-conceptual-glow" aria-hidden="true" />
+      <div className="stitch-conceptual-card">
+        {/* Top Status Bar */}
+        <div className="stitch-conceptual-header">
+          <div className="stitch-con-badge-wrap">
+            <span className="stitch-pulse-dot active" />
+            <span className="stitch-con-badge-text">DETERMINISTIC CHANGE CONTROL · ZERO-REGRESSION ENGINE</span>
+          </div>
+          <div className="stitch-con-meta">
+            <span className="stitch-con-pill">Scenario T002 • Failed Payment</span>
+            <span className="stitch-con-pill active">Release Gate: ENFORCING</span>
+          </div>
+        </div>
+
+        {/* Node Architecture Map */}
+        <div className="stitch-nodes-canvas">
+          {/* SVG Connection Lines */}
+          <svg className="stitch-nodes-svg" aria-hidden="true" viewBox="0 0 800 360" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="lineGradLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#4338CA" stopOpacity="0.7" />
+              </linearGradient>
+              <linearGradient id="lineGradRight" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#6366F1" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#4338CA" stopOpacity="0.7" />
+              </linearGradient>
+            </defs>
+            <line x1="200" y1="80" x2="400" y2="180" stroke="url(#lineGradLeft)" strokeWidth="2" strokeDasharray="6 4" className="stitch-pulse-line" />
+            <line x1="600" y1="80" x2="400" y2="180" stroke="url(#lineGradRight)" strokeWidth="2" strokeDasharray="6 4" className="stitch-pulse-line" />
+            <line x1="200" y1="280" x2="400" y2="180" stroke="url(#lineGradLeft)" strokeWidth="2" strokeDasharray="6 4" className="stitch-pulse-line" />
+            <line x1="400" y1="180" x2="600" y2="280" stroke="url(#lineGradRight)" strokeWidth="2.5" className="stitch-solid-line" />
+          </svg>
+
+          {/* Node 1: Top-Left - Observable Agent Claim */}
+          <div className="stitch-node-card node-tl">
+            <div className="stitch-node-header">
+              <span className="stitch-node-tag">AGENT CLAIM</span>
+              <span className="stitch-node-status warn">NATURAL LANGUAGE</span>
+            </div>
+            <div className="stitch-node-title">Candidate Agent Response</div>
+            <p className="stitch-node-sub">&quot;Your transfer of $1,200.00 was completed successfully.&quot;</p>
+            <div className="stitch-node-footer">
+              <span className="stitch-node-pill warn">Extracted Claim: SUCCESS</span>
+            </div>
+          </div>
+
+          {/* Node 2: Top-Right - Core Banking Truth */}
+          <div className="stitch-node-card node-tr">
+            <div className="stitch-node-header">
+              <span className="stitch-node-tag">API EVIDENCE</span>
+              <span className="stitch-node-status info">AUTHORITATIVE</span>
+            </div>
+            <div className="stitch-node-title">Banking Ledger State</div>
+            <p className="stitch-node-sub"><code>{JSON.stringify({ status: "FAILED", error: "INSUFFICIENT_FUNDS" })}</code></p>
+            <div className="stitch-node-footer">
+              <span className="stitch-node-pill danger">Tool Result: FAILED</span>
+            </div>
+          </div>
+
+          {/* Central Hub: AgentShield Invariant Engine */}
+          <div className="stitch-center-node">
+            <div className="stitch-center-shield-glow" aria-hidden="true" />
+            <div className="stitch-center-shield">
+              <Icon name="shield" size={32} />
+            </div>
+            <div className="stitch-center-label">AgentShield Core</div>
+            <div className="stitch-center-badge">INVARIANT ENGINE</div>
+          </div>
+
+          {/* Node 3: Bottom-Left - Deterministic Policy Assertion */}
+          <div className="stitch-node-card node-bl">
+            <div className="stitch-node-header">
+              <span className="stitch-node-tag">INVARIANT CHECK</span>
+              <span className="stitch-node-status neutral">RULE T002</span>
+            </div>
+            <div className="stitch-node-title">Policy Invariant Verification</div>
+            <p className="stitch-node-sub">PAYMENT_STATUS_MISMATCH policy check</p>
+            <div className="stitch-node-footer">
+              <span className="stitch-node-pill danger">Violation: Claim Mismatch</span>
+            </div>
+          </div>
+
+          {/* Node 4: Bottom-Right - Autonomous Release Gate */}
+          <div className="stitch-node-card node-br highlight">
+            <div className="stitch-node-header">
+              <span className="stitch-node-tag">RELEASE GATE</span>
+              <span className="stitch-node-status danger">AUTONOMOUS</span>
+            </div>
+            <div className="stitch-node-title">Release Gate Decision</div>
+            <div className="stitch-gate-verdict-row">
+              <div className="stitch-gate-verdict danger">BLOCKED</div>
+              <span className="stitch-gate-note">Halts unsafe deployment</span>
+            </div>
+            <div className="stitch-node-footer">
+              <span className="stitch-node-pill success">v1.2 Fix: ALLOWED (32/32)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Conceptual Footer Bar */}
+        <div className="stitch-conceptual-footer">
+          <div className="stitch-cf-item">
+            <Icon name="check" size={16} className="text-success" />
+            <span>Zero Unverified Claims Released</span>
+          </div>
+          <div className="stitch-cf-item">
+            <Icon name="activity" size={16} className="text-cyan" />
+            <span>9-Step Observable Execution Traces</span>
+          </div>
+          <div className="stitch-cf-item">
+            <Icon name="bolt" size={16} className="text-indigo" />
+            <span>Sub-second Invariant Assessment</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Homepage({
   user,
@@ -11,70 +140,172 @@ export default function Homepage({
   onOpenSignUp,
   onSignOut,
 }) {
-  const [activeTab, setActiveTab] = useState('v1.1');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const avatarBtnRef = useRef(null);
+  const mobileToggleRef = useRef(null);
+
+  // Close user dropdown menu on click outside or Escape key
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setUserMenuOpen(false);
+        avatarBtnRef.current?.focus();
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [userMenuOpen]);
+
+  // Close mobile drawer on click outside or Escape key and restore focus
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+        mobileToggleRef.current?.focus();
+      }
+    }
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="stitch-page">
-      {/* SECTION A — Sticky Navigation */}
-      <header className="stitch-header" role="banner">
+      {/* SECTION A — STICKY ENTERPRISE NAVIGATION */}
+      <header className="stitch-header" role="banner" ref={headerRef}>
         <div className="stitch-header-inner">
-          {/* Brand Logo & Wordmark */}
+          {/* Brand Logo & Wordmark (Left) */}
           <div
             className="stitch-brand"
             tabIndex={0}
             role="link"
             onClick={onOpenConsole}
-            onKeyDown={e => e.key === 'Enter' && onOpenConsole()}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenConsole();
+              }
+            }}
           >
             <span className="stitch-brand-icon" aria-hidden="true">
               <Icon name="shield" size={22} />
             </span>
             <div className="stitch-brand-text">
               <span className="stitch-brand-name">AgentShield</span>
-              <span className="stitch-brand-badge">SAFETY ENGINE</span>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links (Center) */}
           <nav className="stitch-nav" aria-label="Main Navigation">
-            <a href="#">Home</a>
-            <button type="button" className="stitch-nav-btn" onClick={onOpenConsole}>Evaluation Engine</button>
-            <button type="button" className="stitch-nav-btn" onClick={onOpenLibrary}>Scenario Library</button>
-            <button type="button" className="stitch-nav-btn" onClick={onOpenHistory || onOpenConsole}>Evaluation History</button>
+            <a
+              href="#"
+              onClick={e => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              Home
+            </a>
             <a href="#how-it-works">How It Works</a>
             <a href="#security">Security</a>
           </nav>
 
-          {/* Right Action / Auth Buttons */}
+          {/* Right Action / Auth & Profile (Right) */}
           <div className="stitch-auth-actions">
             {user ? (
-              <div className="stitch-user-menu">
-                <div className="stitch-user-pill">
-                  <span className="stitch-user-avatar" aria-hidden="true">
-                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
-                  </span>
-                  <div className="stitch-user-meta">
-                    <strong>{user.full_name}</strong>
-                    <small>{user.email}</small>
-                  </div>
-                </div>
+              <div className="stitch-user-menu-wrapper" ref={userMenuRef}>
                 <button
                   type="button"
-                  className="stitch-btn-primary stitch-btn-sm"
+                  className="stitch-btn-primary stitch-btn-sm stitch-launch-nav-btn"
                   onClick={onOpenConsole}
-                  aria-label="Go to Dashboard"
+                  aria-label="Launch Engine"
                 >
+                  <Icon name="play" size={13} />
                   <span>Launch Engine</span>
-                  <Icon name="arrow" size={14} />
                 </button>
-                <button
-                  type="button"
-                  className="stitch-btn-ghost stitch-btn-sm"
-                  onClick={onSignOut}
-                >
-                  Sign Out
-                </button>
+
+                {/* Accessible User Avatar Dropdown */}
+                <div className="stitch-dropdown-container">
+                  <button
+                    ref={avatarBtnRef}
+                    type="button"
+                    className="stitch-avatar-btn"
+                    aria-label={`User account menu for ${user.full_name || user.email}`}
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                    onClick={() => setUserMenuOpen(prev => !prev)}
+                  >
+                    <span className="stitch-user-avatar" aria-hidden="true">
+                      {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                    <span className="stitch-avatar-name">{user.full_name || 'User'}</span>
+                    <span className={`stitch-avatar-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden="true">
+                      <Icon name="chevron" size={13} />
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        className="stitch-account-dropdown"
+                        role="menu"
+                        aria-label="Account options"
+                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <div className="stitch-dropdown-user-info">
+                          <div className="stitch-dropdown-avatar" aria-hidden="true">
+                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          <div className="stitch-dropdown-meta">
+                            <strong className="stitch-dropdown-name">{user.full_name || 'AgentShield User'}</strong>
+                            <small className="stitch-dropdown-email">{user.email}</small>
+                          </div>
+                        </div>
+                        <div className="stitch-dropdown-divider" role="separator" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="stitch-dropdown-item danger"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            onSignOut();
+                          }}
+                        >
+                          <Icon name="logout" size={15} />
+                          <span>Sign Out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             ) : (
               <div className="stitch-guest-actions">
@@ -95,299 +326,180 @@ export default function Homepage({
               </div>
             )}
 
-            {/* Mobile Hamburger Button */}
+            {/* Accessible Mobile Hamburger Toggle */}
             <button
+              ref={mobileToggleRef}
               type="button"
               className="stitch-mobile-toggle"
               aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
               aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-controls="stitch-mobile-drawer"
+              onClick={() => setMobileMenuOpen(prev => !prev)}
             >
               <Icon name={mobileMenuOpen ? 'close' : 'menu'} size={22} />
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="stitch-mobile-drawer" role="navigation" aria-label="Mobile Navigation">
-            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); onOpenConsole(); }}>
-              Evaluation Engine
-            </button>
-            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); onOpenLibrary(); }}>
-              Scenario Library
-            </button>
-            <button type="button" className="stitch-drawer-link" onClick={() => { setMobileMenuOpen(false); if (onOpenHistory) onOpenHistory(); else onOpenConsole(); }}>
-              Evaluation History
-            </button>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-            <a href="#comparison" onClick={() => setMobileMenuOpen(false)}>Why AgentShield</a>
-            <a href="#personas" onClick={() => setMobileMenuOpen(false)}>Personas</a>
-            <a href="#security" onClick={() => setMobileMenuOpen(false)}>Security</a>
-            <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-            <div className="stitch-mobile-auth">
-              {user ? (
-                <>
-                  <button type="button" className="stitch-btn-primary w-full" onClick={() => { setMobileMenuOpen(false); onOpenConsole(); }}>
-                    Launch Evaluation Engine
-                  </button>
-                  <button type="button" className="stitch-btn-ghost w-full" onClick={() => { setMobileMenuOpen(false); onSignOut(); }}>
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button type="button" className="stitch-btn-ghost w-full" onClick={() => { setMobileMenuOpen(false); onOpenSignIn(); }}>
-                    Sign In
-                  </button>
-                  <button type="button" className="stitch-btn-gradient w-full" onClick={() => { setMobileMenuOpen(false); onOpenSignUp(); }}>
-                    Get Started
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Accessible Mobile Drawer */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              id="stitch-mobile-drawer"
+              className="stitch-mobile-drawer"
+              role="navigation"
+              aria-label="Mobile Navigation"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <a
+                href="#"
+                className="stitch-drawer-link"
+                onClick={e => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                Home
+              </a>
+              <a
+                href="#how-it-works"
+                className="stitch-drawer-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                How It Works
+              </a>
+              <a
+                href="#security"
+                className="stitch-drawer-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Security
+              </a>
+
+              <div className="stitch-mobile-auth">
+                <button
+                  type="button"
+                  className="stitch-btn-primary stitch-mobile-launch-btn w-full"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenConsole();
+                  }}
+                >
+                  <Icon name="play" size={15} />
+                  <span>Launch Evaluation Engine</span>
+                </button>
+
+                {user ? (
+                  <div className="stitch-mobile-user-card">
+                    <div className="stitch-dropdown-user-info">
+                      <div className="stitch-dropdown-avatar" aria-hidden="true">
+                        {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="stitch-dropdown-meta">
+                        <strong className="stitch-dropdown-name">{user.full_name || 'AgentShield User'}</strong>
+                        <small className="stitch-dropdown-email">{user.email}</small>
+                      </div>
+                    </div>
+                    <div className="stitch-dropdown-divider" role="separator" />
+                    <button
+                      type="button"
+                      className="stitch-dropdown-item danger w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onSignOut();
+                      }}
+                    >
+                      <Icon name="logout" size={15} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="stitch-mobile-guest-btns">
+                    <button
+                      type="button"
+                      className="stitch-btn-ghost stitch-mobile-auth-btn w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenSignIn();
+                      }}
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      type="button"
+                      className="stitch-btn-gradient stitch-mobile-auth-btn w-full"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenSignUp();
+                      }}
+                    >
+                      Get Started
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="stitch-main">
-        {/* SECTION B — Premium Hero */}
+        {/* SECTION B — PREMIUM HERO */}
         <section className="stitch-hero" aria-label="Hero Section">
-          {/* Top Ambient Glow Field */}
           <div className="stitch-ambient-glow" aria-hidden="true" />
 
           <div className="stitch-hero-content">
-            {/* Announcement Eyebrow Pill */}
-            <div className="stitch-pill">
-              <span className="stitch-pill-pulse" aria-hidden="true" />
-              <span className="stitch-pill-text">AI AGENT SAFETY · EVIDENCE-BASED RELEASE CONTROL</span>
-              <span className="stitch-pill-sub hidden-mobile">• Safe Change Control for AI Banking Agents</span>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* Editorial Hero Heading */}
+              <h1 className="stitch-hero-title">
+                Ship Safer AI Agents.{' '}
+                <span className="stitch-gradient-text">With Evidence.</span>
+              </h1>
 
-            {/* Main Editorial Hero Heading */}
-            <h1 className="stitch-hero-title">
-              Ship Safer AI Agents.{' '}
-              <span className="stitch-gradient-text">With Evidence.</span>
-            </h1>
+              {/* Accessible Subheading for Screen Readers */}
+              <h2 className="sr-only">Safe Change Control for AI Banking Agents</h2>
 
-            {/* Screen-reader / Accessible Sub-heading */}
-            <h2 className="sr-only">Safe Change Control for AI Banking Agents</h2>
+              {/* Supporting Copy */}
+              <p className="stitch-hero-lead">
+                AgentShield helps engineering, quality assurance, and governance teams detect unsafe AI agent updates, validate behavior against trusted evidence, and make informed release decisions.
+              </p>
 
-            {/* Supporting Copy */}
-            <p className="stitch-hero-lead">
-              AgentShield helps AI engineering and QA teams detect unsafe updates, validate agent responses against tool evidence, and make confident release-readiness decisions.
-            </p>
+              {/* Clean Single Primary CTA + Discovery Link */}
+              <div className="stitch-hero-cta">
+                <button
+                  type="button"
+                  className="stitch-btn-primary stitch-btn-lg"
+                  onClick={onOpenConsole}
+                  aria-label="Launch Evaluation Engine"
+                >
+                  <Icon name="bolt" size={18} />
+                  <span>Launch Evaluation Engine</span>
+                  <Icon name="arrow" size={15} />
+                </button>
 
-            {/* Hero Action Buttons */}
-            <div className="stitch-hero-cta">
-              <button
-                type="button"
-                className="stitch-btn-primary stitch-btn-lg"
-                onClick={onOpenConsole}
-                aria-label="Launch Evaluation Console"
-              >
-                <Icon name="bolt" size={18} />
-                <span>Launch Evaluation Engine</span>
-                <span className="stitch-btn-badge">Engine</span>
-              </button>
-
-              <button
-                type="button"
-                className="stitch-btn-secondary stitch-btn-lg"
-                onClick={onOpenHistory || onOpenConsole}
-                aria-label="View My Evaluation History"
-              >
-                <Icon name="clock" size={18} />
-                <span>View My Evaluation History</span>
-              </button>
-
-              <button
-                type="button"
-                className="stitch-btn-secondary stitch-btn-lg"
-                onClick={onOpenLibrary}
-                aria-label="Explore 24 Banking Scenarios"
-              >
-                <Icon name="layers" size={18} />
-                <span>Explore 24 Banking Scenarios</span>
-              </button>
-            </div>
-
-            {/* SECTION C — Interactive Product Preview */}
-            <div className="stitch-preview-container" role="region" aria-label="Interactive Product Preview">
-              <div className="stitch-preview-glow" aria-hidden="true" />
-
-              <div className="stitch-preview-card">
-                {/* Search / Command Status Bar */}
-                <div className="stitch-cmd-bar">
-                  <div className="stitch-cmd-left">
-                    <Icon name="search" size={18} className="text-cyan" />
-                    <span className="stitch-cmd-title">Scenario T002 • Failed Payment</span>
-                    <span className="stitch-cmd-subtitle">Insufficient Funds Verification</span>
-                  </div>
-                  <div className="stitch-cmd-right">
-                    <span className="stitch-cmd-ping">
-                      <span className="stitch-ping-dot" />
-                      12ms trace latency
-                    </span>
-                    <kbd className="stitch-cmd-kbd">ESC</kbd>
-                  </div>
-                </div>
-
-                {/* Candidate Selector Tabs */}
-                <div className="stitch-preview-tabs" role="tablist" aria-label="Evaluation Candidate Selector">
-                  <button
-                    type="button"
-                    role="tab"
-                    id="tab-v11"
-                    aria-selected={activeTab === 'v1.1'}
-                    aria-controls="panel-v11"
-                    className={`stitch-tab ${activeTab === 'v1.1' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('v1.1')}
-                  >
-                    <span className="stitch-tab-name">Candidate v1.1 (Unsafe Update)</span>
-                    <span className="stitch-badge stitch-badge-danger">BLOCKED</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="tab"
-                    id="tab-v12"
-                    aria-selected={activeTab === 'v1.2'}
-                    aria-controls="panel-v12"
-                    className={`stitch-tab ${activeTab === 'v1.2' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('v1.2')}
-                  >
-                    <span className="stitch-tab-name">Candidate v1.2 (Corrected Update)</span>
-                    <span className="stitch-badge stitch-badge-success">ALLOWED</span>
-                  </button>
-                </div>
-
-                {/* Interactive Panel Content */}
-                {activeTab === 'v1.1' ? (
-                  <div id="panel-v11" role="tabpanel" aria-labelledby="tab-v11" className="stitch-panel">
-                    <div className="stitch-panel-meta">
-                      <div>
-                        <h3>Baseline v1.0 vs Candidate v1.1</h3>
-                        <p>Tested across 24 banking scenarios • 1 critical regression detected</p>
-                      </div>
-                      <div className="stitch-verdict-box danger">
-                        <span className="stitch-verdict-tag">Release Gate</span>
-                        <strong className="stitch-verdict-text">BLOCKED</strong>
-                      </div>
-                    </div>
-
-                    <div className="stitch-evidence-grid">
-                      {/* Column 1: API Status */}
-                      <div className="stitch-col">
-                        <div className="stitch-col-header">
-                          <span className="stitch-col-tag">Authoritative API Status</span>
-                          <span className="stitch-chip danger">FAILED</span>
-                        </div>
-                        <div className="stitch-code-block danger">
-                          <pre>
-                            <code>{JSON.stringify({
-  status: "FAILED",
-  error: "INSUFFICIENT_FUNDS",
-  amount: 1200.00,
-  currency: "USD",
-  account_id: "CHK-9812"
-}, null, 2)}</code>
-                          </pre>
-                        </div>
-                      </div>
-
-                      {/* Column 2: Agent Response */}
-                      <div className="stitch-col">
-                        <div className="stitch-col-header">
-                          <span className="stitch-col-tag">Candidate Agent Claim</span>
-                          <span className="stitch-chip danger">SUCCESS (CONTRADICTION)</span>
-                        </div>
-                        <div className="stitch-quote-block danger">
-                          <p>&quot;Your transfer of $1,200.00 was completed successfully! Your account balance is now updated.&quot;</p>
-                          <div className="stitch-claim-tag danger">
-                            <span>Extracted Claim:</span> <strong>SUCCESS</strong>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="stitch-callout-footer danger">
-                      <div className="stitch-callout-icon danger">
-                        <Icon name="shield" size={18} />
-                      </div>
-                      <div className="stitch-callout-text">
-                        <strong>Policy Violation: PAYMENT_STATUS_MISMATCH</strong>
-                        <span>The agent falsely claimed transaction SUCCESS despite the core banking API returning FAILED. Critical safety violation detected.</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div id="panel-v12" role="tabpanel" aria-labelledby="tab-v12" className="stitch-panel">
-                    <div className="stitch-panel-meta">
-                      <div>
-                        <h3>Baseline v1.0 vs Candidate v1.2</h3>
-                        <p>Tested across 24 banking scenarios • 0 critical regressions</p>
-                      </div>
-                      <div className="stitch-verdict-box success">
-                        <span className="stitch-verdict-tag">Release Gate</span>
-                        <strong className="stitch-verdict-text">ALLOWED</strong>
-                      </div>
-                    </div>
-
-                    <div className="stitch-evidence-grid">
-                      {/* Column 1: API Status */}
-                      <div className="stitch-col">
-                        <div className="stitch-col-header">
-                          <span className="stitch-col-tag">Authoritative API Status</span>
-                          <span className="stitch-chip neutral">FAILED</span>
-                        </div>
-                        <div className="stitch-code-block">
-                          <pre>
-                            <code>{JSON.stringify({
-  status: "FAILED",
-  error: "INSUFFICIENT_FUNDS",
-  amount: 1200.00,
-  currency: "USD",
-  account_id: "CHK-9812"
-}, null, 2)}</code>
-                          </pre>
-                        </div>
-                      </div>
-
-                      {/* Column 2: Agent Response */}
-                      <div className="stitch-col">
-                        <div className="stitch-col-header">
-                          <span className="stitch-col-tag">Candidate Agent Claim</span>
-                          <span className="stitch-chip success">FAILED (MATCHED)</span>
-                        </div>
-                        <div className="stitch-quote-block success">
-                          <p>&quot;Your payment failed due to insufficient funds. No amount was transferred.&quot;</p>
-                          <div className="stitch-claim-tag success">
-                            <span>Extracted Claim:</span> <strong>FAILED</strong>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="stitch-callout-footer success">
-                      <div className="stitch-callout-icon success">
-                        <Icon name="check" size={18} />
-                      </div>
-                      <div className="stitch-callout-text">
-                        <strong>Safety Verdict: PASS · Zero Policy Violations</strong>
-                        <span>Agent accurately communicated tool failure to customer. 24/24 scenarios passed. Release Gate permits deployment.</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Explicit Prototype Label */}
-                <div className="stitch-preview-footer">
-                  <Icon name="info" size={15} />
-                  <span>Illustrative preview using synthetic banking scenarios.</span>
-                </div>
+                <a href="#how-it-works" className="stitch-hero-secondary-link">
+                  <span>Discover How It Works</span>
+                  <Icon name="arrow" size={15} />
+                </a>
               </div>
-            </div>
+            </motion.div>
+
+            {/* SECTION C — Clean Conceptual Engine Visual */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ConceptualEngineGraphic />
+            </motion.div>
           </div>
         </section>
 
@@ -410,9 +522,9 @@ export default function Homepage({
             {/* 4 Truthful Stat Tiles */}
             <div className="stitch-stats-grid">
               <div className="stitch-stat-card">
-                <span className="stitch-stat-number text-cyan">24</span>
+                <span className="stitch-stat-number text-cyan">32</span>
                 <span className="stitch-stat-label">Synthetic Banking Cases</span>
-                <p className="stitch-stat-desc">Fixed deterministic test cases covering payments, limits, overdrafts, and card security.</p>
+                <p className="stitch-stat-desc">Naturally ordered test cases covering payments, OTP verification, holds, limits, freshness, and reconciliation.</p>
               </div>
 
               <div className="stitch-stat-card">
@@ -444,8 +556,8 @@ export default function Homepage({
               <div className="stitch-pipeline-steps">
                 <div className="stitch-step-item">
                   <div className="stitch-step-num">01</div>
-                  <strong>24 Synthetic Scenarios</strong>
-                  <p>Execute fixed banking cases covering payments, overdrafts, daily limits, and card locks.</p>
+                  <strong>32 Synthetic Scenarios</strong>
+                  <p>Execute ordered banking cases covering payments, OTP verification, holds, daily limits, freshness, and conflicts.</p>
                 </div>
                 <div className="stitch-step-item">
                   <div className="stitch-step-num">02</div>
@@ -472,7 +584,7 @@ export default function Homepage({
           </div>
         </section>
 
-        {/* SECTION E — COMPARISON SECTION */}
+        {/* SECTION E — THE PROBLEM & COMPARISON */}
         <section id="comparison" className="stitch-section" aria-labelledby="comparison-heading">
           <div className="stitch-container">
             <div className="stitch-section-header text-center">
@@ -608,7 +720,7 @@ export default function Homepage({
           </div>
         </section>
 
-        {/* SECTION F — CORE FEATURES (BENTO GRID) */}
+        {/* SECTION F — CORE CAPABILITIES (BENTO GRID) */}
         <section id="features" className="stitch-section stitch-bg-alt" aria-labelledby="features-heading">
           <div className="stitch-container">
             <div className="stitch-section-header text-center">
@@ -622,7 +734,7 @@ export default function Homepage({
             </div>
 
             <div className="stitch-bento-grid">
-              {/* Feature 1: Evidence-Based Safety Evaluation (Col 7) */}
+              {/* Feature 1: Evidence-Based Safety Evaluation */}
               <div className="stitch-bento-card col-7">
                 <div className="stitch-bento-header">
                   <div className="stitch-icon-badge indigo">
@@ -633,7 +745,6 @@ export default function Homepage({
                     Validate the agent&apos;s natural-language claims against actual observed tool results. Prevent subtle hallucinations from confirming failed transactions.
                   </p>
                 </div>
-                {/* Code / Evidence Snippet */}
                 <div className="stitch-terminal-mockup">
                   <div className="stitch-terminal-bar">
                     <div className="stitch-terminal-dots">
@@ -645,14 +756,14 @@ export default function Homepage({
                   <div className="stitch-terminal-body">
                     <p className="text-secondary">$ agentshield verify-evidence --candidate v1.1</p>
                     <p className="text-cyan mt-1">✔ Dispatching banking tool: payment_transfer(amount=1200.00)</p>
-                    <p className="text-slate">→ API Result: {JSON.stringify({ status: "FAILED", error: "INSUFFICIENT_FUNDS" })}</p>
-                    <p className="text-danger mt-1">✖ Agent Assertion: &quot;Transfer completed successfully!&quot;</p>
-                    <p className="text-danger font-bold">→ Violation: Tool FAILED vs Agent SUCCESS =&gt; Gate: BLOCKED</p>
+                    <p className="text-slate">&rarr; API Result: {JSON.stringify({ status: "FAILED", error: "INSUFFICIENT_FUNDS" })}</p>
+                    <p className="text-danger mt-1">&cross; Agent Assertion: &quot;Transfer completed successfully!&quot;</p>
+                    <p className="text-danger font-bold">&rarr; Violation: Tool FAILED vs Agent SUCCESS =&gt; Gate: BLOCKED</p>
                   </div>
                 </div>
               </div>
 
-              {/* Feature 2: Version Regression Detection (Col 5) */}
+              {/* Feature 2: Version Regression Detection */}
               <div className="stitch-bento-card col-5">
                 <div className="stitch-bento-header">
                   <div className="stitch-icon-badge cyan">
@@ -666,20 +777,24 @@ export default function Homepage({
                 <div className="stitch-regression-visual">
                   <div className="stitch-diff-row">
                     <span className="stitch-diff-label">Baseline v1.0</span>
-                    <span className="stitch-chip neutral">24/24 PASS</span>
+                    <span className="stitch-chip neutral">32/32 PASS</span>
                   </div>
                   <div className="stitch-diff-row danger">
                     <span className="stitch-diff-label">Candidate v1.1</span>
-                    <span className="stitch-chip danger">23/24 (+1 REGRESSION)</span>
+                    <span className="stitch-chip danger">31/32 (+1 REGRESSION)</span>
                   </div>
                   <div className="stitch-diff-row success">
                     <span className="stitch-diff-label">Candidate v1.2</span>
-                    <span className="stitch-chip success">24/24 (0 REGRESSIONS)</span>
+                    <span className="stitch-chip success">32/32 (0 REGRESSIONS)</span>
+                  </div>
+                  <div className="stitch-diff-row danger">
+                    <span className="stitch-diff-label">Candidate v1.3</span>
+                    <span className="stitch-chip danger">23/32 (9 REGRESSIONS)</span>
                   </div>
                 </div>
               </div>
 
-              {/* Feature 3: Execution Trace Explorer (Col 4) */}
+              {/* Feature 3: Execution Trace Explorer */}
               <div className="stitch-bento-card col-4">
                 <div className="stitch-icon-badge indigo">
                   <Icon name="layers" size={22} />
@@ -690,7 +805,7 @@ export default function Homepage({
                 </p>
               </div>
 
-              {/* Feature 4: Release Gate Engine (Col 4) */}
+              {/* Feature 4: Deterministic Release Gate */}
               <div className="stitch-bento-card col-4">
                 <div className="stitch-icon-badge cyan">
                   <Icon name="command" size={22} />
@@ -701,7 +816,7 @@ export default function Homepage({
                 </p>
               </div>
 
-              {/* Feature 5: Persistent Evaluation History (Col 4) */}
+              {/* Feature 5: Persistent Evaluation History */}
               <div className="stitch-bento-card col-4">
                 <div className="stitch-icon-badge indigo">
                   <Icon name="clock" size={22} />
@@ -711,32 +826,11 @@ export default function Homepage({
                   Authenticated users revisit stored evaluation records with strict user ownership boundaries and zero cross-tenant leak.
                 </p>
               </div>
-
-              {/* Feature 6: Reproducible Demo Environment (Col 12) */}
-              <div className="stitch-bento-card col-12 stitch-bento-wide">
-                <div className="stitch-bento-wide-content">
-                  <div className="stitch-icon-badge cyan">
-                    <Icon name="box" size={22} />
-                  </div>
-                  <div>
-                    <h3 className="stitch-bento-title">Reproducible Demo Environment</h3>
-                    <p className="stitch-bento-desc">
-                      The prototype operates with synthetic banking test data and deploys seamlessly via Docker Compose with PostgreSQL or standalone local SQLite.
-                    </p>
-                  </div>
-                </div>
-                <div className="stitch-env-badges">
-                  <span className="stitch-pill-tag">Docker Compose</span>
-                  <span className="stitch-pill-tag">FastAPI Backend</span>
-                  <span className="stitch-pill-tag">PostgreSQL 16</span>
-                  <span className="stitch-pill-tag">Deterministic LLM Mode</span>
-                </div>
-              </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION G — TARGET USERS */}
+        {/* SECTION G — TARGET USERS & PERSONAS */}
         <section id="personas" className="stitch-section" aria-labelledby="personas-heading">
           <div className="stitch-container">
             <div className="stitch-section-header text-center">
@@ -751,7 +845,6 @@ export default function Homepage({
             </div>
 
             <div className="stitch-personas-grid">
-              {/* Persona 1: QA Engineers */}
               <div className="stitch-persona-card">
                 <div className="stitch-persona-badge">QA Engineers</div>
                 <h3 className="stitch-persona-title">Automated Regression Suites</h3>
@@ -764,7 +857,6 @@ export default function Homepage({
                 </div>
               </div>
 
-              {/* Persona 2: AI / Prompt Engineers */}
               <div className="stitch-persona-card">
                 <div className="stitch-persona-badge">AI / Prompt Engineers</div>
                 <h3 className="stitch-persona-title">Prompt &amp; Model Debugging</h3>
@@ -777,7 +869,6 @@ export default function Homepage({
                 </div>
               </div>
 
-              {/* Persona 3: Release Managers */}
               <div className="stitch-persona-card">
                 <div className="stitch-persona-badge">Release Managers</div>
                 <h3 className="stitch-persona-title">Binary Release Gates</h3>
@@ -790,7 +881,6 @@ export default function Homepage({
                 </div>
               </div>
 
-              {/* Persona 4: Compliance & Risk */}
               <div className="stitch-persona-card">
                 <div className="stitch-persona-badge">Compliance &amp; Risk</div>
                 <h3 className="stitch-persona-title">Regulatory Audit Proof</h3>
@@ -846,8 +936,8 @@ export default function Homepage({
 
               <div className="stitch-security-card">
                 <div className="stitch-sec-icon"><Icon name="box" size={20} /></div>
-                <h4>Docker-Based Deployment</h4>
-                <p>Containerized multi-tier stack where Nginx reverse-proxies /api to FastAPI on port 8000, keeping DB internal.</p>
+                <h4>Docker &amp; Render Cloud Deployment</h4>
+                <p>Zero-dependency architecture with Nginx reverse proxying to FastAPI, supporting Render web services and Neon DB.</p>
               </div>
 
               <div className="stitch-security-card">
@@ -899,7 +989,7 @@ export default function Homepage({
                   <Icon name="arrow" size={16} className="stitch-faq-icon" />
                 </summary>
                 <div className="stitch-faq-body">
-                  No. AgentShield strictly uses 24 synthetic banking scenarios with mock customer IDs, simulated account balances, and non-custodial transactions. No real customer data, real bank accounts, or real funds are ever touched.
+                  No. AgentShield strictly uses 32 synthetic banking scenarios with mock customer IDs, simulated account balances, and non-custodial transactions. No real customer data, real bank accounts, or real funds are ever touched.
                 </div>
               </details>
 
@@ -910,16 +1000,6 @@ export default function Homepage({
                 </summary>
                 <div className="stitch-faq-body">
                   If any candidate update introduces a new policy violation (such as falsely claiming a failed payment succeeded, as in Candidate v1.1 on Scenario T002), the release gate immediately issues a BLOCKED verdict, tags the critical violation, and preserves the execution trace for engineering analysis.
-                </div>
-              </details>
-
-              <details className="stitch-faq-item">
-                <summary>
-                  <span>Does the release gate deploy or block production software automatically?</span>
-                  <Icon name="arrow" size={16} className="stitch-faq-icon" />
-                </summary>
-                <div className="stitch-faq-body">
-                  In this prototype, AgentShield produces an authoritative advisory ALLOW / BLOCK determination with full audit evidence. In production CI/CD pipelines, this output is connected to deployment webhooks to halt releases with critical regressions.
                 </div>
               </details>
 
@@ -957,7 +1037,7 @@ export default function Homepage({
                   Make Every AI Agent Update Safer to Release.
                 </h2>
                 <p className="stitch-final-cta-desc">
-                  Evaluate changes, inspect the evidence, and understand release risks before shipping.
+                  Evaluate agent changes, validate behavior against evidence, and identify release risks before deployment.
                 </p>
                 <div className="stitch-final-cta-actions">
                   <button
@@ -968,14 +1048,6 @@ export default function Homepage({
                   >
                     <span>Launch Evaluation Engine</span>
                     <Icon name="arrow" size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="stitch-btn-cta-secondary"
-                    onClick={onOpenHistory || onOpenConsole}
-                    aria-label="View Evaluation History"
-                  >
-                    <span>View Evaluation History</span>
                   </button>
                 </div>
               </div>
@@ -1010,8 +1082,10 @@ export default function Homepage({
               <h4>Product</h4>
               <button type="button" className="stitch-footer-link" onClick={onOpenConsole}>Evaluation Console</button>
               <button type="button" className="stitch-footer-link" onClick={onOpenLibrary}>Scenario Library</button>
+              <button type="button" className="stitch-footer-link" onClick={onOpenHistory || onOpenConsole}>Evaluation History</button>
               <a href="#how-it-works">5-Stage Pipeline</a>
               <a href="#features">Capabilities</a>
+              <a href="#comparison">Why AgentShield</a>
             </div>
 
             {/* Links Col 2: Governance */}
@@ -1029,7 +1103,7 @@ export default function Homepage({
               <span>Synthetic Banking Data</span>
               <span>Deterministic Mode</span>
               <span>Zero PII Stored</span>
-              <span>Visionet Techthon Prototype</span>
+              <span>Visionet Techthon 2026</span>
             </div>
           </div>
 
@@ -1044,5 +1118,6 @@ export default function Homepage({
         </div>
       </footer>
     </div>
+    </MotionConfig>
   );
 }

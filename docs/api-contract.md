@@ -16,16 +16,23 @@ POST /api/evaluations
 
 {
   "run_id": "RUN-001",
-  "total_tests": 8,
-  "passed": 7,
-  "critical_regressions": 1,
+  "baseline_version": "v1.0",
+  "candidate_version": "v1.3",
+  "total_tests": 32,
+  "passed": 23,
+  "failed": 9,
+  "critical_regressions": 6,
+  "high_regressions": 3,
+  "regression_scenarios": 9,
+  "total_violations": 9,
   "release_decision": "BLOCK",
   "results": [
     {
-      "scenario_id": "PAYMENT-001",
+      "scenario_id": "T002",
       "tool_status": "FAILED",
       "agent_claim": "SUCCESS",
-      "severity": "CRITICAL"
+      "severity": "CRITICAL",
+      "policy_violation": "PAYMENT_STATUS_MISMATCH"
     }
   ]
 }
