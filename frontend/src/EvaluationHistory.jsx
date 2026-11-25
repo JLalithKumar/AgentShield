@@ -56,7 +56,7 @@ export default function EvaluationHistory({ runs, onOpen, onConsole, loading, er
             <table>
               <thead>
                 <tr>
-                  {['Run ID', 'Candidate version', 'Passed', 'Critical regressions', 'Release decision', 'Recorded time', 'Action'].map(label => (
+                  {['Run ID', 'Candidate version', 'Passed', 'Critical', 'High', 'Release decision', 'Recorded time', 'Action'].map(label => (
                     <th key={label}>{label}</th>
                   ))}
                 </tr>
@@ -68,6 +68,7 @@ export default function EvaluationHistory({ runs, onOpen, onConsole, loading, er
                     <td>{run.candidate_version}</td>
                     <td>{run.passed} / {run.total_tests}</td>
                     <td>{run.critical_regressions ?? 'Unknown'}</td>
+                    <td>{run.high_regressions ?? 0}</td>
                     <td><Badge>{releaseLabel(run)}</Badge></td>
                     <td><time dateTime={run.recorded_at}>{new Date(run.recorded_at).toLocaleString()}</time></td>
                     <td>

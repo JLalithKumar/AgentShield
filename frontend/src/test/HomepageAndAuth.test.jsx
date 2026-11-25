@@ -51,7 +51,7 @@ describe('Homepage Component', () => {
 
     // 5-Stage Workflow Pipeline
     expect(screen.getByRole('heading', { name: /The 5-Stage Evaluation Pipeline/i })).toBeInTheDocument();
-    expect(screen.getByText(/24 Synthetic Scenarios/i)).toBeInTheDocument();
+    expect(screen.getByText(/32 Synthetic Scenarios/i)).toBeInTheDocument();
     expect(screen.getByText(/Record 9 Observable Steps/i)).toBeInTheDocument();
     expect(screen.getByText(/Validate Against Tools/i)).toBeInTheDocument();
     expect(screen.getByText(/Version Regression Engine/i)).toBeInTheDocument();

@@ -27,13 +27,15 @@ function mockRun(candidate, regression = false) {
     run_id: `test-run-${candidate}`,
     baseline_version: 'v1.0',
     candidate_version: candidate,
-    total_tests: 24,
-    passed: regression ? 23 : 24,
+    total_tests: results.length,
+    passed: results.filter(r => r.passed).length,
+    failed: results.filter(r => !r.passed).length,
     critical_regressions: regression ? 1 : 0,
+    high_regressions: 0,
     release_decision: regression ? 'BLOCK' : 'ALLOW',
     reason: regression
-      ? 'Blocked: 1 critical regression detected on T002.'
-      : 'Allowed: All 24 scenarios passed with 0 critical regressions.',
+      ? '1 critical safety regression detected across banking checks; release gate recommends blocking promotion.'
+      : `All ${results.length} banking safety scenarios passed with 0 regressions; candidate satisfies release gate policy.`,
     results,
   };
 }
@@ -90,7 +92,7 @@ describe('Enterprise UI/UX and WCAG 2.2 AA Accessibility', () => {
 
     await user.selectOptions(categorySelect, 'REFUND');
     const refundCount = SCENARIOS.filter(s => s.category === 'REFUND').length;
-    expect(screen.getByText(`${refundCount} of 24 scenarios`)).toBeInTheDocument();
+    expect(screen.getByText(`${refundCount} of ${SCENARIOS.length} scenarios`)).toBeInTheDocument();
   });
 
   it('displays prominent Release Gate Outcome summary for BLOCKED runs', async () => {
@@ -105,7 +107,7 @@ describe('Enterprise UI/UX and WCAG 2.2 AA Accessibility', () => {
     await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByText('AUTOMATED RELEASE BLOCKED')).toBeInTheDocument();
-    expect(screen.getByText(/candidate v1.1 introduced 1 critical regression on scenario t002/i)).toBeInTheDocument();
+    expect(screen.getByText(/candidate v1\.1 introduced 1 safety regression .* on scenario t002/i)).toBeInTheDocument();
     expect(screen.getByText('BLOCKED')).toBeInTheDocument();
   });
 
@@ -122,7 +124,8 @@ describe('Enterprise UI/UX and WCAG 2.2 AA Accessibility', () => {
     await user.click(screen.getByRole('button', { name: /^run evaluation$/i }));
 
     expect(await screen.findByText('AUTOMATED RELEASE ALLOWED')).toBeInTheDocument();
-    expect(screen.getByText(/candidate v1.2 passed all 24 banking scenarios/i)).toBeInTheDocument();
+    const summaryCard = screen.getByLabelText('Release Decision Summary');
+    expect(within(summaryCard).getByText(new RegExp(`candidate v1\\.2 passed all ${SCENARIOS.length} banking scenarios`, 'i'))).toBeInTheDocument();
     expect(screen.getByText('ALLOWED')).toBeInTheDocument();
   });
 

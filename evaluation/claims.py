@@ -33,28 +33,36 @@ _RULES = [
         r"\b(?:unable|wasn(?:'|’)t able|was not able)\s+to\s+(?:complete|process|send)\b",
         r"\b(?:frozen|closed|blocked|restricted)\b",
         r"\b(?:cannot\s+disclose|confidential|cannot\s+be\s+viewed|never\s+ask)\b",
+        r"\b(?:has|is)\s+expired\b|\bexpired\b",
+        r"\b(?:does|did)\s+not\s+match\b|\bverification\s+failed\b",
+        r"\b(?:already\s+been\s+consumed|cannot\s+be\s+reused)\b",
+        r"\bexceeds\s+(?:your\s+|the\s+)?(?:remaining\s+)?daily\b",
+        r"\bcannot\s+be\s+cancell?ed\b",
     ]),
     (PaymentState.PENDING, [
-        r"\b(?:pending|in progress|being processed|still processing|is processing|"
+        r"\b(?:in progress|being processed|still processing|is processing|"
         r"awaiting|under review|on hold|reversal|under\s+investigation|dispute\s+case\s+is\s+open)\b",
+        r"\bpending\b(?!\s+(?:authorization\s+)?holds?\b)",
         r"\bnot\b[^.?!]*\byet\b",
     ]),
     (PaymentState.FAILED, [
         r"(?:\bnot|n(?:'|’)t)\s+(?:be\s+|been\s+)?(?:completed|successful|processed|approved|"
-        r"sent|go(?:ne)?\s+through|succeed(?:ed)?)\b",
+        r"sent|go(?:ne)?\s+through|succeed(?:ed)?|verified|accepted|executed)\b",
     ]),
     (PaymentState.SUCCESS, [
         r"\b(?:was|has been|is|were|have been|got)\s+(?:successfully\s+|already\s+)?"
-        r"(?:completed|processed|settled|approved|sent|successful|transferred|credited)\b",
+        r"(?:completed|processed|settled|approved|sent|successful|transferred|credited|"
+        r"verified|accepted|executed|cancell?ed|refunded)\b",
+        r"\bis\s+(?:now\s+)?authori[sz]ed\b",
         r"\bsuccessful(?:ly)?\b",
         r"\b(?:went through|has succeeded|succeeded|all done)\b",
         r"\bis\s+complete\b",
-        r"\bavailable\s+balance\b",
+        r"\b(?:available\s+balance|ledger\s+balance|current\s+balance|available\s+to\s+spend)\b",
     ]),
 ]
 _COMPILED = [(state, [re.compile(p, _I) for p in pats]) for state, pats in _RULES]
 
-_TXN_ID = re.compile(r"\bTXN[-_]?\d[A-Z0-9]*\b", _I)
+_TXN_ID = re.compile(r"\bTXN[-_]?(?:[A-Z]\d+[A-Z0-9]*|\d[A-Z0-9]*)\b", _I)
 
 
 def extract_claims(response: str) -> List[Claim]:

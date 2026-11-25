@@ -53,7 +53,7 @@ def test_t002_responses_match_issue_requirements(version, expected):
     assert result["response"] == expected
 
 
-@pytest.mark.parametrize("version", ["v1.0", "v1.1", "v1.2"])
+@pytest.mark.parametrize("version", ["v1.0", "v1.1", "v1.2", "v1.3"])
 def test_unknown_failed_scenario_never_claims_success(version):
     result = generate_response(
         version,
@@ -64,3 +64,10 @@ def test_unknown_failed_scenario_never_claims_success(version):
     assert result["response"] == (
         "Your payment failed. Please contact support if you need help."
     )
+
+
+def test_v13_covers_all_eight_expanded_scenarios():
+    for sid in ("T033", "T034", "T035", "T045", "T047", "T049", "T050", "T054"):
+        out = generate_response("v1.3", {"scenario_id": sid}, {"status": "FAILED"})
+        assert out["version"] == "v1.3"
+        assert isinstance(out["response"], str) and out["response"].strip()

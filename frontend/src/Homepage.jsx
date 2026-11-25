@@ -106,7 +106,7 @@ function ConceptualEngineGraphic() {
               <span className="stitch-gate-note">Halts unsafe deployment</span>
             </div>
             <div className="stitch-node-footer">
-              <span className="stitch-node-pill success">v1.2 Fix: ALLOWED (24/24)</span>
+              <span className="stitch-node-pill success">v1.2 Fix: ALLOWED (32/32)</span>
             </div>
           </div>
         </div>
@@ -522,9 +522,9 @@ export default function Homepage({
             {/* 4 Truthful Stat Tiles */}
             <div className="stitch-stats-grid">
               <div className="stitch-stat-card">
-                <span className="stitch-stat-number text-cyan">24</span>
+                <span className="stitch-stat-number text-cyan">32</span>
                 <span className="stitch-stat-label">Synthetic Banking Cases</span>
-                <p className="stitch-stat-desc">Fixed deterministic test cases covering payments, limits, overdrafts, and card security.</p>
+                <p className="stitch-stat-desc">Naturally ordered test cases covering payments, OTP verification, holds, limits, freshness, and reconciliation.</p>
               </div>
 
               <div className="stitch-stat-card">
@@ -556,8 +556,8 @@ export default function Homepage({
               <div className="stitch-pipeline-steps">
                 <div className="stitch-step-item">
                   <div className="stitch-step-num">01</div>
-                  <strong>24 Synthetic Scenarios</strong>
-                  <p>Execute fixed banking cases covering payments, overdrafts, daily limits, and card locks.</p>
+                  <strong>32 Synthetic Scenarios</strong>
+                  <p>Execute ordered banking cases covering payments, OTP verification, holds, daily limits, freshness, and conflicts.</p>
                 </div>
                 <div className="stitch-step-item">
                   <div className="stitch-step-num">02</div>
@@ -777,15 +777,19 @@ export default function Homepage({
                 <div className="stitch-regression-visual">
                   <div className="stitch-diff-row">
                     <span className="stitch-diff-label">Baseline v1.0</span>
-                    <span className="stitch-chip neutral">24/24 PASS</span>
+                    <span className="stitch-chip neutral">32/32 PASS</span>
                   </div>
                   <div className="stitch-diff-row danger">
                     <span className="stitch-diff-label">Candidate v1.1</span>
-                    <span className="stitch-chip danger">23/24 (+1 REGRESSION)</span>
+                    <span className="stitch-chip danger">31/32 (+1 REGRESSION)</span>
                   </div>
                   <div className="stitch-diff-row success">
                     <span className="stitch-diff-label">Candidate v1.2</span>
-                    <span className="stitch-chip success">24/24 (0 REGRESSIONS)</span>
+                    <span className="stitch-chip success">32/32 (0 REGRESSIONS)</span>
+                  </div>
+                  <div className="stitch-diff-row danger">
+                    <span className="stitch-diff-label">Candidate v1.3</span>
+                    <span className="stitch-chip danger">23/32 (9 REGRESSIONS)</span>
                   </div>
                 </div>
               </div>
@@ -985,7 +989,7 @@ export default function Homepage({
                   <Icon name="arrow" size={16} className="stitch-faq-icon" />
                 </summary>
                 <div className="stitch-faq-body">
-                  No. AgentShield strictly uses 24 synthetic banking scenarios with mock customer IDs, simulated account balances, and non-custodial transactions. No real customer data, real bank accounts, or real funds are ever touched.
+                  No. AgentShield strictly uses 32 synthetic banking scenarios with mock customer IDs, simulated account balances, and non-custodial transactions. No real customer data, real bank accounts, or real funds are ever touched.
                 </div>
               </details>
 

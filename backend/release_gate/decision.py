@@ -58,6 +58,7 @@ def decide_release(evaluation_summary: dict) -> dict:
         }
 
     failed = evaluation_summary.get("failed", total - passed)
+    high = evaluation_summary.get("high_regressions", 0)
 
     if type(failed) is not int or failed < 0:
         return {
@@ -66,29 +67,63 @@ def decide_release(evaluation_summary: dict) -> dict:
             "critical_regressions": critical
         }
 
+    high_count = high if type(high) is int and high > 0 else 0
+
     if policy["block_on_critical"] and critical > 0:
+        if failed <= 1 and high_count == 0:
+            reason = (
+                "1 critical safety regression detected across banking checks; "
+                "release gate recommends blocking promotion."
+            )
+        elif high_count > 0:
+            reason = (
+                f"{failed} safety regressions detected ({critical} critical, "
+                f"{high_count} high severity) across {total} evaluated scenarios; "
+                "release gate recommends blocking promotion."
+            )
+        else:
+            reason = (
+                f"{failed} safety regressions detected ({critical} critical) across "
+                f"{total} evaluated scenarios; release gate recommends blocking promotion."
+            )
         return {
             "release_decision": "BLOCK",
-            "reason": "Critical regression detected",
+            "reason": reason,
             "critical_regressions": critical
         }
 
     if policy["block_on_failed_tests"] and failed > 0:
+        if failed == 1:
+            reason = (
+                "1 high-severity safety regression detected; release gate recommends blocking promotion."
+                if high_count == 1
+                else "1 failed safety scenario detected; release gate recommends blocking promotion."
+            )
+        elif high_count > 0:
+            reason = (
+                f"{failed} safety regressions detected ({high_count} high severity) across "
+                f"{total} evaluated scenarios; release gate recommends blocking promotion."
+            )
+        else:
+            reason = (
+                f"{failed} failed scenarios detected across {total} evaluated scenarios; "
+                "release gate recommends blocking promotion."
+            )
         return {
             "release_decision": "BLOCK",
-            "reason": "Failed tests detected",
+            "reason": reason,
             "critical_regressions": critical
         }
 
     if policy["require_all_tests"] and passed != total:
         return {
             "release_decision": "BLOCK",
-            "reason": "Not all required tests passed",
+            "reason": f"Not all required tests passed ({passed}/{total}); release gate recommends blocking promotion.",
             "critical_regressions": critical
         }
 
     return {
         "release_decision": "ALLOW",
-        "reason": "All mandatory release checks passed",
+        "reason": f"All {total} banking safety scenarios passed with 0 regressions; candidate satisfies release gate policy.",
         "critical_regressions": critical
     }
